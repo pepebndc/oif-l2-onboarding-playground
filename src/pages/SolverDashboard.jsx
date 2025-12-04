@@ -103,7 +103,7 @@ export default function SolverDashboard() {
       setIsConnecting(false)
       setIsConnected(true)
       setConnectedAddress('0x742d35Cc6634C0532925a3b844Bc9e7595f2bD73')
-    }, 3000)
+    }, 1000)
   }
 
   const handleAddToken = () => {
