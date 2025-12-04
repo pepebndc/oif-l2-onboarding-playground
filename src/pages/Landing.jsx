@@ -17,8 +17,7 @@ import {
   Link2,
   Sun,
   Moon,
-  ExternalLink,
-  Github
+  ExternalLink
 } from 'lucide-react'
 import { useTheme } from '../App'
 
@@ -460,15 +459,6 @@ export default function Landing() {
 
             {/* Right Actions */}
             <div className="flex items-center gap-2">
-              <a 
-                href="https://github.com/OpenZeppelin"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 rounded-lg transition-colors hover:bg-black/5 dark:hover:bg-white/5"
-                style={{ color: 'var(--oz-text-muted)' }}
-              >
-                <Github className="w-5 h-5" />
-              </a>
               <button
                 onClick={toggleTheme}
                 className="p-2 rounded-lg transition-colors hover:bg-black/5 dark:hover:bg-white/5"
@@ -477,12 +467,6 @@ export default function Landing() {
               >
                 {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
-              <Link
-                to="/onboarding"
-                className="oz-btn-primary ml-2"
-              >
-                Get Started
-              </Link>
             </div>
           </div>
         </div>
@@ -533,7 +517,7 @@ export default function Landing() {
               to="/onboarding"
               className="group flex items-center gap-2 oz-btn-primary px-8 py-3.5 text-base glow-blue"
             >
-              Get Started
+              Onboard Your L2
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link

@@ -6,8 +6,7 @@ import {
   Menu, 
   X,
   Sun,
-  Moon,
-  ExternalLink
+  Moon
 } from 'lucide-react'
 import { useState, useEffect, createContext, useContext } from 'react'
 import NewNetworkOnboarding from './pages/NewNetworkOnboarding'
@@ -93,23 +92,6 @@ function Navigation() {
             >
               {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
-            
-            {/* Docs link */}
-            <a 
-              href="https://docs.openzeppelin.com" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-black/5 dark:hover:bg-white/5"
-              style={{ color: 'var(--oz-text-muted)' }}
-            >
-              Docs
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-
-            {/* Connect Wallet Button */}
-            <button className="oz-btn-primary">
-              Connect Wallet
-            </button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -156,9 +138,6 @@ function Navigation() {
                 {label}
               </NavLink>
             ))}
-            <button className="w-full mt-3 oz-btn-primary">
-              Connect Wallet
-            </button>
           </div>
         </div>
       )}
@@ -168,10 +147,10 @@ function Navigation() {
 
 export default function App() {
   const [isDark, setIsDark] = useState(() => {
-    // Check localStorage first, then system preference
+    // Check localStorage first, then default to light
     const saved = localStorage.getItem('oz-theme')
     if (saved) return saved === 'dark'
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
+    return false
   })
 
   useEffect(() => {

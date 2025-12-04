@@ -15,6 +15,13 @@ import {
   Wallet
 } from 'lucide-react'
 
+// OpenZeppelin Logo Component
+function OZLogo({ className = "w-4 h-4" }) {
+  return (
+    <img src="/logo-oz.svg" alt="OpenZeppelin" className={className} />
+  )
+}
+
 // Physics-based Confetti with collision detection
 function Confetti({ active, cardRef }) {
   const canvasRef = useRef(null)
@@ -638,11 +645,11 @@ export default function UserBridge() {
         <div className="flex items-center justify-center gap-6 text-xs" style={{ color: 'var(--oz-text-muted)' }}>
           <div className="flex items-center gap-1.5">
             <Shield className="w-4 h-4" style={{ color: 'var(--oz-blue)' }} />
-            <span>Secured by Broadcaster</span>
+            <span className="flex items-center gap-1">Secured by <OZLogo className="w-4 h-4" /></span>
           </div>
           <div className="flex items-center gap-1.5">
             <Zap className="w-4 h-4 text-emerald-500" />
-            <span>OIF Powered</span>
+            <span>Powered by OIF</span>
           </div>
         </div>
       </div>
