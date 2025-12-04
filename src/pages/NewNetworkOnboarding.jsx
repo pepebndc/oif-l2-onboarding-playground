@@ -195,6 +195,7 @@ export default function NewNetworkOnboarding() {
   const [verifyingDeposits, setVerifyingDeposits] = useState(false)
   const [depositsVerified, setDepositsVerified] = useState(false)
   const [launchComplete, setLaunchComplete] = useState(false)
+  const [isSubmittingRequest, setIsSubmittingRequest] = useState(false)
   const [depositProgress, setDepositProgress] = useState({
     eth: 0,
     tokens: 0,
@@ -288,10 +289,10 @@ export default function NewNetworkOnboarding() {
 
   // Launch solver
   const launchSolver = () => {
-    setVerifyingDeposits(true)
+    setIsSubmittingRequest(true)
     setTimeout(() => {
       setLaunchComplete(true)
-      setVerifyingDeposits(false)
+      setIsSubmittingRequest(false)
     }, 2000)
   }
 
@@ -1393,11 +1394,11 @@ export default function NewNetworkOnboarding() {
                   ) : (
                     <button
                       onClick={launchSolver}
-                      disabled={verifyingDeposits}
+                      disabled={isSubmittingRequest}
                       className="w-full py-4 rounded-xl font-semibold text-white transition-all flex items-center justify-center gap-2 glow-blue disabled:opacity-50"
                       style={{ background: 'linear-gradient(to right, var(--oz-blue), #6366f1)' }}
                     >
-                      {verifyingDeposits ? (
+                      {isSubmittingRequest ? (
                         <>
                           <Loader2 className="w-5 h-5 animate-spin" />
                           Submitting Request...
