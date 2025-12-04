@@ -98,6 +98,23 @@ const parentNetworks = [
   { id: 'polygon', name: 'Polygon PoS', type: 'L1' },
 ]
 
+const rollupStacks = [
+  { 
+    id: 'op', 
+    name: 'OP Stack', 
+    description: 'Optimism\'s modular rollup framework',
+    color: '#FF0420',
+    chains: ['Base', 'Zora', 'Mode', 'Worldchain', 'Mint']
+  },
+  { 
+    id: 'arbitrum', 
+    name: 'Arbitrum Orbit', 
+    description: 'Arbitrum\'s L2/L3 deployment stack',
+    color: '#28A0F0',
+    chains: ['Arbitrum Nova', 'Xai', 'Treasure', 'Sanko']
+  },
+]
+
 const hubChains = [
   { id: 'ethereum', name: 'Ethereum Mainnet', settlementTime: '~15 min' },
   { id: 'arbitrum', name: 'Arbitrum One', settlementTime: '~7 min' },
@@ -146,6 +163,7 @@ export default function NewNetworkOnboarding() {
     chainId: '',
     rpcUrl: '',
     explorerUrl: '',
+    rollupStack: '',
     parentChain: '',
     hubChain: '',
     backupAdminAddress: '',
@@ -574,6 +592,59 @@ export default function NewNetworkOnboarding() {
                     placeholder="https://explorer.your-network.io"
                     className="oz-input font-mono text-sm"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-3" style={{ color: 'var(--oz-text)' }}>Rollup Stack</label>
+                  <p className="text-sm mb-4" style={{ color: 'var(--oz-text-muted)' }}>
+                    Select the rollup framework your L2 is built on. This determines canonical bridge integration.
+                  </p>
+                  <div className="grid md:grid-cols-2 gap-3">
+                    {rollupStacks.map((stack) => (
+                      <button
+                        key={stack.id}
+                        onClick={() => setFormData({ ...formData, rollupStack: stack.id })}
+                        className="flex items-start gap-4 p-4 rounded-xl border transition-all text-left"
+                        style={{
+                          background: formData.rollupStack === stack.id ? `${stack.color}10` : 'var(--oz-surface)',
+                          borderColor: formData.rollupStack === stack.id ? stack.color : 'var(--oz-border)'
+                        }}
+                      >
+                        <div 
+                          className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                          style={{ background: `${stack.color}20` }}
+                        >
+                          {stack.id === 'op' ? (
+                            <svg viewBox="0 0 32 32" className="w-7 h-7">
+                              <circle cx="16" cy="16" r="16" fill={stack.color}/>
+                              <path fill="#FFF" d="M10.9 19.2c-1.5 0-2.7-.4-3.5-1.2-.8-.8-1.2-2-1.2-3.4 0-1 .2-1.9.6-2.7.4-.8 1-1.4 1.8-1.9.8-.4 1.7-.7 2.7-.7 1.4 0 2.5.4 3.3 1.2.8.8 1.2 1.9 1.2 3.3 0 1-.2 2-.6 2.8-.4.8-1 1.4-1.8 1.9-.8.5-1.6.7-2.5.7zm.2-2.1c.5 0 1-.2 1.3-.5.3-.3.6-.8.7-1.3.2-.6.2-1.1.2-1.7 0-.7-.2-1.2-.5-1.6-.3-.4-.8-.6-1.4-.6-.5 0-1 .2-1.3.5-.3.3-.6.8-.8 1.3-.2.6-.2 1.1-.2 1.7 0 .7.2 1.2.5 1.6.4.4.9.6 1.5.6zm7.4 1.9V10.6h2.3l.2 1.3c.3-.5.7-.9 1.2-1.1.5-.3 1-.4 1.6-.4.9 0 1.6.3 2.1.8.5.5.8 1.3.8 2.3V19h-2.6v-5c0-.5-.1-.9-.3-1.2-.2-.3-.6-.4-1-.4-.5 0-.9.2-1.2.5-.3.4-.5.9-.5 1.5V19h-2.6z"/>
+                            </svg>
+                          ) : (
+                            <svg viewBox="0 0 32 32" className="w-7 h-7">
+                              <g fill="none">
+                                <circle cx="16" cy="16" r="16" fill="#2D374B"/>
+                                <path fill={stack.color} d="M16.8 10.6l5.2 8.3-2.4 1.4-3.9-6.2-1.1 1.7 3.3 5.3-2.4 1.4-4.4-7z"/>
+                                <path fill="#FFF" d="M20.5 21.7l2.4-1.4.8 1.3-2.4 1.4zM11.3 21.7l-2.4-1.4-.8 1.3 2.4 1.4z"/>
+                                <path fill={stack.color} d="M15.2 10.6l-5.2 8.3 2.4 1.4 3.9-6.2 1.1 1.7-3.3 5.3 2.4 1.4 4.4-7z"/>
+                              </g>
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium" style={{ color: 'var(--oz-text)' }}>{stack.name}</span>
+                            {formData.rollupStack === stack.id && (
+                              <Check className="w-4 h-4" style={{ color: stack.color }} />
+                            )}
+                          </div>
+                          <div className="text-xs mb-2" style={{ color: 'var(--oz-text-muted)' }}>{stack.description}</div>
+                          <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>
+                            <span className="opacity-60">Examples:</span> {stack.chains.slice(0, 3).join(', ')}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div>
@@ -1387,6 +1458,20 @@ export default function NewNetworkOnboarding() {
                       <div className="flex justify-between">
                         <span style={{ color: 'var(--oz-text-muted)' }}>Network</span>
                         <span className="font-medium" style={{ color: 'var(--oz-text)' }}>{formData.chainName || 'My L2 Network'}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span style={{ color: 'var(--oz-text-muted)' }}>Rollup Stack</span>
+                        <span className="flex items-center gap-2">
+                          {formData.rollupStack && (
+                            <span 
+                              className="w-2 h-2 rounded-full" 
+                              style={{ background: rollupStacks.find(s => s.id === formData.rollupStack)?.color }}
+                            />
+                          )}
+                          <span style={{ color: 'var(--oz-text)' }}>
+                            {rollupStacks.find(s => s.id === formData.rollupStack)?.name || '—'}
+                          </span>
+                        </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span style={{ color: 'var(--oz-text-muted)' }}>Parent (L1)</span>
