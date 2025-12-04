@@ -26,17 +26,17 @@ const features = [
   {
     icon: Zap,
     title: 'Fast Intent Bridging',
-    description: 'Leverage OIF\'s intent-based architecture for near-instant cross-chain transfers with solver front-running.'
+    description: 'Leverage OIF\'s intent-based architecture for near-instant cross-chain transfers.'
   },
   {
     icon: Shield,
     title: 'Trustless Settlement',
-    description: 'Broadcaster oracles ensure decentralized verification without single points of failure.'
+    description: 'Broadcaster and canonical bridges ensure decentralized verification without centralized points of trust.'
   },
   {
     icon: Globe,
     title: 'Hub Connectivity',
-    description: 'Connect to any HUB chain for maximum liquidity access and protocol interoperability.'
+    description: 'Connect your chainto any HUB chain and compose with other OIF protocolsfor maximum liquidity access and protocol interoperability.'
   }
 ]
 
@@ -510,7 +510,7 @@ export default function Landing() {
             className="text-5xl md:text-6xl lg:text-7xl font-bold text-center leading-tight mb-6 animate-fade-in"
             style={{ animationDelay: '0.2s' }}
           >
-            <span className="gradient-text">L2 Onboarding</span>
+            <span className="gradient-text">OIF Onboarding</span>
             <br />
             <span style={{ color: 'var(--oz-text)' }}>Made Simple</span>
           </h1>
@@ -636,9 +636,9 @@ export default function Landing() {
       {/* Cards Section */}
       <section className="py-20" style={{ borderTop: '1px solid var(--oz-border)' }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <h2 className="text-3xl font-bold text-center mb-4" style={{ color: 'var(--oz-text)' }}>Choose Your Path</h2>
+          <h2 className="text-3xl font-bold text-center mb-4" style={{ color: 'var(--oz-text)' }}>Explore the OIF Tooling</h2>
           <p className="text-center mb-12 max-w-xl mx-auto" style={{ color: 'var(--oz-text-muted)' }}>
-            Whether you're onboarding a new chain, managing existing infrastructure, or bridging assets.
+            Whether you're onboarding a new chain, managing existing infrastructure, or bridging assets, the OIF tooling by OpenZeppelin has you covered.
           </p>
 
           <div className="grid md:grid-cols-3 gap-6">
@@ -670,24 +670,20 @@ export default function Landing() {
       <footer className="py-8" style={{ borderTop: '1px solid var(--oz-border)' }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
+            <a href="https://www.openzeppelin.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
               <OZLogo className="w-6 h-6" />
               <span className="text-sm font-medium" style={{ color: 'var(--oz-text-muted)' }}>
-                OpenZeppelin OIF Tooling
+                OIF Tooling by OpenZeppelin
               </span>
-            </div>
+            </a>
             <div className="flex items-center gap-6">
-              <a href="https://docs.openzeppelin.com" target="_blank" rel="noopener noreferrer"
+              <a href="https://docs.openintents.xyz" target="_blank" rel="noopener noreferrer"
                 className="text-sm hover:underline" style={{ color: 'var(--oz-text-muted)' }}>
-                Documentation
+                OIF Documentation
               </a>
-              <a href="https://github.com/OpenZeppelin" target="_blank" rel="noopener noreferrer"
+              <a href="https://github.com/openintentsframework" target="_blank" rel="noopener noreferrer"
                 className="text-sm hover:underline" style={{ color: 'var(--oz-text-muted)' }}>
-                GitHub
-              </a>
-              <a href="https://openzeppelin.com" target="_blank" rel="noopener noreferrer"
-                className="text-sm hover:underline" style={{ color: 'var(--oz-text-muted)' }}>
-                openzeppelin.com
+                OIF GitHub
               </a>
             </div>
           </div>
