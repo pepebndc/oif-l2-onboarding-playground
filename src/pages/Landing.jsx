@@ -521,6 +521,12 @@ export default function Landing() {
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
+              to="/dashboard"
+              className="oz-btn-secondary flex items-center gap-2 px-8 py-3.5 text-base"
+            >
+              Manage Your Solver
+            </Link>
+            <Link
               to="/bridge"
               className="oz-btn-secondary flex items-center gap-2 px-8 py-3.5 text-base"
             >
