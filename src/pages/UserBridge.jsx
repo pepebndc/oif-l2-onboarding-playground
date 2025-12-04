@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { 
   ArrowRightLeft, 
   ChevronDown,
@@ -14,51 +15,179 @@ import {
   Wallet
 } from 'lucide-react'
 
-// Confetti component
-function Confetti({ active }) {
-  const [particles, setParticles] = useState([])
+// Physics-based Confetti with collision detection
+function Confetti({ active, cardRef }) {
+  const canvasRef = useRef(null)
+  const particlesRef = useRef([])
+  const animationRef = useRef(null)
   
   useEffect(() => {
-    if (active) {
-      const colors = ['#4E5EE4', '#63D2F9', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6']
-      const newParticles = Array.from({ length: 100 }, (_, i) => ({
-        id: i,
-        x: Math.random() * 100,
-        delay: Math.random() * 0.5,
-        duration: 2 + Math.random() * 2,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        size: 4 + Math.random() * 8,
-        rotation: Math.random() * 360,
-      }))
-      setParticles(newParticles)
-      
-      const timer = setTimeout(() => setParticles([]), 4000)
-      return () => clearTimeout(timer)
+    if (!active) {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
+      }
+      particlesRef.current = []
+      return
     }
-  }, [active])
+    
+    const colors = ['#4E5EE4', '#63D2F9', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#fbbf24', '#34d399', '#a78bfa', '#f472b6', '#60a5fa', '#fcd34d']
+    
+    // Initialize particles
+    particlesRef.current = Array.from({ length: 250 }, () => ({
+      x: Math.random() * window.innerWidth,
+      y: -20 - Math.random() * 200,
+      vx: (Math.random() - 0.5) * 4,
+      vy: Math.random() * 2 + 2,
+      size: 6 + Math.random() * 10,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rotation: Math.random() * 360,
+      rotationSpeed: (Math.random() - 0.5) * 10,
+      type: Math.random(),
+      opacity: 1,
+      bounced: false,
+    }))
+    
+    const canvas = canvasRef.current
+    if (!canvas) return
+    
+    const ctx = canvas.getContext('2d')
+    canvas.width = window.innerWidth
+    canvas.height = window.innerHeight
+    
+    const gravity = 0.15
+    const friction = 0.99
+    const bounceDamping = 0.6
+    
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      
+      // Get card bounds if available
+      let cardBounds = null
+      if (cardRef?.current) {
+        const rect = cardRef.current.getBoundingClientRect()
+        cardBounds = {
+          left: rect.left - 10,
+          right: rect.right + 10,
+          top: rect.top - 10,
+          bottom: rect.bottom + 10,
+        }
+      }
+      
+      let activeParticles = 0
+      
+      particlesRef.current.forEach((p) => {
+        if (p.opacity <= 0) return
+        activeParticles++
+        
+        // Apply gravity
+        p.vy += gravity
+        
+        // Apply friction
+        p.vx *= friction
+        
+        // Update position
+        p.x += p.vx
+        p.y += p.vy
+        p.rotation += p.rotationSpeed
+        
+        // Collision with card
+        if (cardBounds && !p.bounced) {
+          const nextY = p.y + p.vy
+          const nextX = p.x + p.vx
+          
+          // Check if particle is approaching the card
+          if (nextX > cardBounds.left && nextX < cardBounds.right) {
+            // Hit top of card
+            if (p.y < cardBounds.top && nextY >= cardBounds.top - p.size) {
+              p.y = cardBounds.top - p.size
+              p.vy = -p.vy * bounceDamping
+              p.vx += (Math.random() - 0.5) * 8 // Add horizontal scatter
+              p.bounced = true
+            }
+          }
+          
+          // Side collisions
+          if (p.y > cardBounds.top && p.y < cardBounds.bottom) {
+            // Hit left side
+            if (p.x > cardBounds.left - p.size && p.x < cardBounds.left + 20 && p.vx > 0) {
+              p.vx = -Math.abs(p.vx) * bounceDamping - 2
+              p.bounced = true
+            }
+            // Hit right side
+            if (p.x < cardBounds.right + p.size && p.x > cardBounds.right - 20 && p.vx < 0) {
+              p.vx = Math.abs(p.vx) * bounceDamping + 2
+              p.bounced = true
+            }
+          }
+        }
+        
+        // Fade out when below viewport
+        if (p.y > window.innerHeight - 100) {
+          p.opacity -= 0.02
+        }
+        
+        // Draw particle
+        ctx.save()
+        ctx.globalAlpha = p.opacity
+        ctx.translate(p.x, p.y)
+        ctx.rotate((p.rotation * Math.PI) / 180)
+        ctx.fillStyle = p.color
+        ctx.shadowColor = p.color
+        ctx.shadowBlur = p.size / 2
+        
+        if (p.type < 0.3) {
+          // Circle
+          ctx.beginPath()
+          ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2)
+          ctx.fill()
+        } else if (p.type < 0.7) {
+          // Square
+          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size)
+        } else {
+          // Streamer/ribbon
+          ctx.fillRect(-p.size * 0.2, -p.size * 0.75, p.size * 0.4, p.size * 1.5)
+        }
+        
+        ctx.restore()
+      })
+      
+      // Continue animation if particles are active
+      if (activeParticles > 0) {
+        animationRef.current = requestAnimationFrame(animate)
+      }
+    }
+    
+    animate()
+    
+    // Cleanup after 8 seconds
+    const timer = setTimeout(() => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
+      }
+      particlesRef.current = []
+    }, 8000)
+    
+    return () => {
+      clearTimeout(timer)
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
+      }
+    }
+  }, [active, cardRef])
   
-  if (!active || particles.length === 0) return null
+  if (!active) return null
   
-  return (
-    <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
-      {particles.map((p) => (
-        <div
-          key={p.id}
-          className="absolute animate-confetti"
-          style={{
-            left: `${p.x}%`,
-            top: '-20px',
-            width: p.size,
-            height: p.size,
-            backgroundColor: p.color,
-            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
-            transform: `rotate(${p.rotation}deg)`,
-            animationDelay: `${p.delay}s`,
-            animationDuration: `${p.duration}s`,
-          }}
-        />
-      ))}
-    </div>
+  return createPortal(
+    <canvas
+      ref={canvasRef}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        pointerEvents: 'none',
+        zIndex: 99999,
+      }}
+    />,
+    document.body
   )
 }
 
@@ -100,6 +229,7 @@ export default function UserBridge() {
   const [isBridging, setIsBridging] = useState(false)
   const [bridgeStatus, setBridgeStatus] = useState(null) // null, 'submitted', 'broadcasted', 'filled'
   const [showConfetti, setShowConfetti] = useState(false)
+  const bridgeCardRef = useRef(null)
 
   const swapChains = () => {
     const temp = fromChain
@@ -216,7 +346,7 @@ export default function UserBridge() {
 
   return (
     <div className="min-h-screen pt-24 pb-16" style={{ background: 'var(--oz-bg)' }}>
-      <Confetti active={showConfetti} />
+      <Confetti active={showConfetti} cardRef={bridgeCardRef} />
       <div className="max-w-lg mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="text-center mb-8">
@@ -229,7 +359,7 @@ export default function UserBridge() {
         </div>
 
         {/* Bridge Card */}
-        <div className="oz-card p-6 mb-8">
+        <div ref={bridgeCardRef} className="oz-card p-6 mb-8">
           {/* From Section */}
           <div className="mb-2">
             <div className="flex items-center justify-between mb-3">
