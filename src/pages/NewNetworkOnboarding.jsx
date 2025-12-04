@@ -171,8 +171,21 @@ export default function NewNetworkOnboarding() {
     tokens: 0,
   })
 
+  // Wallet connection state
+  const [walletConnecting, setWalletConnecting] = useState(false)
+  const [walletAddress, setWalletAddress] = useState(null)
+
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
+
+  // Connect wallet handler
+  const connectWallet = () => {
+    setWalletConnecting(true)
+    setTimeout(() => {
+      setWalletAddress('0x1234567890abcdef1234567890abcdef12345678')
+      setWalletConnecting(false)
+    }, 1000)
   }
 
   // Email handlers
@@ -434,6 +447,58 @@ export default function NewNetworkOnboarding() {
             <div className="animate-fade-in">
               <h2 className="text-2xl font-semibold mb-2" style={{ color: 'var(--oz-text)' }}>Network Configuration</h2>
               <p style={{ color: 'var(--oz-text-muted)' }} className="mb-8">Provide details about your L2 chain and select a HUB for connectivity.</p>
+
+              {/* Wallet Connection */}
+              <div className="p-4 rounded-xl mb-8" style={{ background: 'var(--oz-surface)', border: '1px solid var(--oz-border)' }}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'var(--oz-blue-light)' }}>
+                      <Wallet className="w-5 h-5" style={{ color: 'var(--oz-blue)' }} />
+                    </div>
+                    <div>
+                      <div className="font-medium" style={{ color: 'var(--oz-text)' }}>Wallet Connection</div>
+                      <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>
+                        {walletAddress ? 'Connected' : 'Connect your wallet to continue'}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {walletAddress ? (
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: 'var(--oz-bg)', border: '1px solid var(--oz-border)' }}>
+                        <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                        <code className="text-sm font-mono" style={{ color: 'var(--oz-text)' }}>
+                          {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+                        </code>
+                      </div>
+                      <button
+                        onClick={() => setWalletAddress(null)}
+                        className="p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                      >
+                        <X className="w-4 h-4" style={{ color: 'var(--oz-text-muted)' }} />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={connectWallet}
+                      disabled={walletConnecting}
+                      className="oz-btn-primary px-4 py-2 flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {walletConnecting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Connecting...
+                        </>
+                      ) : (
+                        <>
+                          <Wallet className="w-4 h-4" />
+                          Connect Wallet
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+              </div>
 
               <div className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-6">
@@ -1323,14 +1388,15 @@ export default function NewNetworkOnboarding() {
               >
                 Back
               </button>
-              <button
-                onClick={() => setCurrentStep(Math.min(4, currentStep + 1))}
-                disabled={currentStep === 4}
-                className="oz-btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Continue
-                <ChevronRight className="w-4 h-4" />
-              </button>
+              {currentStep !== 4 && (
+                <button
+                  onClick={() => setCurrentStep(Math.min(4, currentStep + 1))}
+                  className="oz-btn-primary flex items-center gap-2"
+                >
+                  Continue
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              )}
             </div>
           )}
         </div>
