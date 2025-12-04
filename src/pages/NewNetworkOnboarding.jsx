@@ -26,7 +26,7 @@ import {
 const steps = [
   { id: 1, title: 'Network Configuration', icon: Server },
   { id: 2, title: 'Solver Setup', icon: Settings },
-  { id: 3, title: 'Token Pairs', icon: Coins },
+  { id: 3, title: 'Token Sets', icon: Coins },
   { id: 4, title: 'Fund & Launch', icon: Wallet },
 ]
 
@@ -108,26 +108,33 @@ const hubChains = [
 ]
 
 
-// Default token pairs - L2 addresses need to be provided by user
-const defaultTokenPairs = [
+// Default token sets - L2 addresses need to be provided by user
+// Token sets include L1, HUB, and L2 addresses (solver only holds liquidity on HUB and L2)
+const defaultTokenSets = [
   {
     id: 1,
-    l2Address: '', // User must provide
+    l1Address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // USDC on Ethereum
+    l1Symbol: 'USDC',
+    l1Decimals: '6',
     hubAddress: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-    l2Symbol: '', // Will be fetched when L2 address is provided
-    l2Decimals: '',
     hubSymbol: 'USDC',
     hubDecimals: '6',
+    l2Address: '', // User must provide
+    l2Symbol: '', // Will be fetched when L2 address is provided
+    l2Decimals: '',
     isDefault: true,
   },
   {
     id: 2,
-    l2Address: '', // User must provide
+    l1Address: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT on Ethereum
+    l1Symbol: 'USDT',
+    l1Decimals: '6',
     hubAddress: '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2',
-    l2Symbol: '', // Will be fetched when L2 address is provided
-    l2Decimals: '',
     hubSymbol: 'USDT',
     hubDecimals: '18',
+    l2Address: '', // User must provide
+    l2Symbol: '', // Will be fetched when L2 address is provided
+    l2Decimals: '',
     isDefault: true,
   },
 ]
@@ -149,17 +156,21 @@ export default function NewNetworkOnboarding() {
   const [generatingKMS, setGeneratingKMS] = useState(false)
   const [kmsAddress, setKmsAddress] = useState(null)
   
-  // Token pairs state - initialized with defaults
-  const [tokenPairs, setTokenPairs] = useState(defaultTokenPairs)
-  const [newTokenPair, setNewTokenPair] = useState({
-    l2Address: '',
+  // Token sets state - initialized with defaults
+  const [tokenSets, setTokenSets] = useState(defaultTokenSets)
+  const [newTokenSet, setNewTokenSet] = useState({
+    l1Address: '',
+    l1Symbol: '',
+    l1Decimals: '',
     hubAddress: '',
-    l2Symbol: '',
-    l2Decimals: '',
     hubSymbol: '',
     hubDecimals: '',
-    l2Loading: false,
+    l2Address: '',
+    l2Symbol: '',
+    l2Decimals: '',
+    l1Loading: false,
     hubLoading: false,
+    l2Loading: false,
   })
 
   // Deposit verification state
@@ -266,7 +277,7 @@ export default function NewNetworkOnboarding() {
     }, 2000)
   }
 
-  // Token pair handlers
+  // Token set handlers
   const simulateFetchTokenInfo = (address, side) => {
     const mockTokens = {
       '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48': { symbol: 'USDC', decimals: '6' },
@@ -279,14 +290,14 @@ export default function NewNetworkOnboarding() {
     }
 
     if (address.length === 42 && address.startsWith('0x')) {
-      setNewTokenPair(prev => ({
+      setNewTokenSet(prev => ({
         ...prev,
         [`${side}Loading`]: true
       }))
       
       setTimeout(() => {
         const tokenInfo = mockTokens[address] || { symbol: 'TOKEN', decimals: '18' }
-        setNewTokenPair(prev => ({
+        setNewTokenSet(prev => ({
           ...prev,
           [`${side}Symbol`]: tokenInfo.symbol,
           [`${side}Decimals`]: tokenInfo.decimals,
@@ -296,57 +307,72 @@ export default function NewNetworkOnboarding() {
     }
   }
 
-  const handleL2AddressChange = (value) => {
-    setNewTokenPair(prev => ({ ...prev, l2Address: value, l2Symbol: '', l2Decimals: '' }))
+  const handleL1AddressChange = (value) => {
+    setNewTokenSet(prev => ({ ...prev, l1Address: value, l1Symbol: '', l1Decimals: '' }))
     if (value.length === 42) {
-      simulateFetchTokenInfo(value, 'l2')
+      simulateFetchTokenInfo(value, 'l1')
     }
   }
 
   const handleHubAddressChange = (value) => {
-    setNewTokenPair(prev => ({ ...prev, hubAddress: value, hubSymbol: '', hubDecimals: '' }))
+    setNewTokenSet(prev => ({ ...prev, hubAddress: value, hubSymbol: '', hubDecimals: '' }))
     if (value.length === 42) {
       simulateFetchTokenInfo(value, 'hub')
     }
   }
 
-  const addTokenPair = () => {
-    if (newTokenPair.l2Address && newTokenPair.hubAddress && newTokenPair.l2Symbol && newTokenPair.hubSymbol) {
-      setTokenPairs([...tokenPairs, {
+  const handleL2AddressChange = (value) => {
+    setNewTokenSet(prev => ({ ...prev, l2Address: value, l2Symbol: '', l2Decimals: '' }))
+    if (value.length === 42) {
+      simulateFetchTokenInfo(value, 'l2')
+    }
+  }
+
+  const addTokenSet = () => {
+    if (newTokenSet.l1Address && newTokenSet.hubAddress && newTokenSet.l2Address && 
+        newTokenSet.l1Symbol && newTokenSet.hubSymbol && newTokenSet.l2Symbol) {
+      setTokenSets([...tokenSets, {
         id: Date.now(),
-        l2Address: newTokenPair.l2Address,
-        hubAddress: newTokenPair.hubAddress,
-        l2Symbol: newTokenPair.l2Symbol,
-        l2Decimals: newTokenPair.l2Decimals,
-        hubSymbol: newTokenPair.hubSymbol,
-        hubDecimals: newTokenPair.hubDecimals,
+        l1Address: newTokenSet.l1Address,
+        l1Symbol: newTokenSet.l1Symbol,
+        l1Decimals: newTokenSet.l1Decimals,
+        hubAddress: newTokenSet.hubAddress,
+        hubSymbol: newTokenSet.hubSymbol,
+        hubDecimals: newTokenSet.hubDecimals,
+        l2Address: newTokenSet.l2Address,
+        l2Symbol: newTokenSet.l2Symbol,
+        l2Decimals: newTokenSet.l2Decimals,
       }])
-      setNewTokenPair({
-        l2Address: '',
+      setNewTokenSet({
+        l1Address: '',
+        l1Symbol: '',
+        l1Decimals: '',
         hubAddress: '',
-        l2Symbol: '',
-        l2Decimals: '',
         hubSymbol: '',
         hubDecimals: '',
-        l2Loading: false,
+        l2Address: '',
+        l2Symbol: '',
+        l2Decimals: '',
+        l1Loading: false,
         hubLoading: false,
+        l2Loading: false,
       })
     }
   }
 
-  const removeTokenPair = (id) => {
-    setTokenPairs(tokenPairs.filter(t => t.id !== id))
+  const removeTokenSet = (id) => {
+    setTokenSets(tokenSets.filter(t => t.id !== id))
   }
 
-  // Update L2 address for existing token pair (for default tokens)
-  const updateTokenPairL2Address = (id, address) => {
-    setTokenPairs(tokenPairs.map(t => 
+  // Update L2 address for existing token set (for default tokens)
+  const updateTokenSetL2Address = (id, address) => {
+    setTokenSets(tokenSets.map(t => 
       t.id === id ? { ...t, l2Address: address, l2Symbol: '', l2Decimals: '', l2Loading: false } : t
     ))
     
     // Simulate fetching token info
     if (address.length === 42 && address.startsWith('0x')) {
-      setTokenPairs(prev => prev.map(t => 
+      setTokenSets(prev => prev.map(t => 
         t.id === id ? { ...t, l2Loading: true } : t
       ))
       
@@ -362,7 +388,7 @@ export default function NewNetworkOnboarding() {
       
       setTimeout(() => {
         const tokenInfo = mockTokens[address] || { symbol: 'TOKEN', decimals: '18' }
-        setTokenPairs(prev => prev.map(t => 
+        setTokenSets(prev => prev.map(t => 
           t.id === id ? { ...t, l2Symbol: tokenInfo.symbol, l2Decimals: tokenInfo.decimals, l2Loading: false } : t
         ))
       }, 1500)
@@ -801,29 +827,29 @@ export default function NewNetworkOnboarding() {
             </div>
           )}
 
-          {/* Step 3: Token Pairs Configuration */}
+          {/* Step 3: Token Sets Configuration */}
           {currentStep === 3 && (
             <div className="animate-fade-in">
-              <h2 className="text-2xl font-semibold mb-2" style={{ color: 'var(--oz-text)' }}>Token Pairs Configuration</h2>
-              <p style={{ color: 'var(--oz-text-muted)' }} className="mb-8">Configure the token pairs that your solver will support for bridging.</p>
+              <h2 className="text-2xl font-semibold mb-2" style={{ color: 'var(--oz-text)' }}>Token Sets Configuration</h2>
+              <p style={{ color: 'var(--oz-text-muted)' }} className="mb-8">Configure the token sets that your solver will support for bridging (L1 → HUB → L2).</p>
 
-              {/* Token Pairs List */}
-              {tokenPairs.length > 0 && (
+              {/* Token Sets List */}
+              {tokenSets.length > 0 && (
                 <div className="space-y-3 mb-6">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-medium" style={{ color: 'var(--oz-text)' }}>Token Pairs ({tokenPairs.length})</h3>
+                    <h3 className="font-medium" style={{ color: 'var(--oz-text)' }}>Token Sets ({tokenSets.length})</h3>
                     <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>
-                      {tokenPairs.filter(p => p.l2Address && p.l2Symbol).length} of {tokenPairs.length} configured
+                      {tokenSets.filter(s => s.l2Address && s.l2Symbol).length} of {tokenSets.length} configured
                     </div>
                   </div>
                   
-                  {tokenPairs.map((pair) => {
-                    const isConfigured = pair.l2Address && pair.l2Symbol
-                    const isPending = !pair.l2Address || !pair.l2Symbol
+                  {tokenSets.map((tokenSet) => {
+                    const isConfigured = tokenSet.l2Address && tokenSet.l2Symbol
+                    const isPending = !tokenSet.l2Address || !tokenSet.l2Symbol
                     
                     return (
                       <div
-                        key={pair.id}
+                        key={tokenSet.id}
                         className="p-4 rounded-xl border transition-all"
                         style={{
                           background: isPending ? 'rgba(245, 158, 11, 0.05)' : 'var(--oz-surface)',
@@ -837,10 +863,10 @@ export default function NewNetworkOnboarding() {
                               <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm"
                                   style={{ background: 'var(--oz-blue-light)', color: 'var(--oz-blue)' }}>
-                                  {pair.hubSymbol.slice(0, 2)}
+                                  {tokenSet.hubSymbol.slice(0, 2)}
                                 </div>
                                 <div>
-                                  <div className="font-medium" style={{ color: 'var(--oz-text)' }}>{pair.hubSymbol} Token Pair</div>
+                                  <div className="font-medium" style={{ color: 'var(--oz-text)' }}>{tokenSet.hubSymbol} Token Set</div>
                                   <div className="text-xs text-amber-500 flex items-center gap-1">
                                     <AlertCircle className="w-3 h-3" />
                                     L2 address required
@@ -848,7 +874,7 @@ export default function NewNetworkOnboarding() {
                                 </div>
                               </div>
                               <button
-                                onClick={() => removeTokenPair(pair.id)}
+                                onClick={() => removeTokenSet(tokenSet.id)}
                                 className="p-2 rounded-lg hover:bg-red-500/10 transition-colors"
                                 style={{ color: 'var(--oz-text-muted)' }}
                               >
@@ -856,89 +882,122 @@ export default function NewNetworkOnboarding() {
                               </button>
                             </div>
                             
-                            <div className="grid md:grid-cols-2 gap-4">
+                            <div className="grid md:grid-cols-3 gap-4">
+                              {/* L1 Token Info (Read-only) */}
+                              <div>
+                                <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--oz-text-muted)' }}>
+                                  {tokenSet.l1Symbol} Address on L1
+                                </label>
+                                <div className="px-3 py-2 rounded-lg font-mono text-xs"
+                                  style={{ background: 'var(--oz-bg)', border: '1px solid var(--oz-border)', color: 'var(--oz-text-muted)' }}>
+                                  {tokenSet.l1Address.slice(0, 10)}...{tokenSet.l1Address.slice(-6)}
+                                </div>
+                                <div className="flex items-center gap-1.5 mt-2 text-xs text-emerald-500">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  {tokenSet.l1Symbol} ({tokenSet.l1Decimals} decimals)
+                                </div>
+                              </div>
+
+                              {/* HUB Token Info (Read-only) */}
+                              <div>
+                                <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--oz-text-muted)' }}>
+                                  {tokenSet.hubSymbol} Address on HUB
+                                </label>
+                                <div className="px-3 py-2 rounded-lg font-mono text-xs"
+                                  style={{ background: 'var(--oz-bg)', border: '1px solid var(--oz-border)', color: 'var(--oz-text-muted)' }}>
+                                  {tokenSet.hubAddress.slice(0, 10)}...{tokenSet.hubAddress.slice(-6)}
+                                </div>
+                                <div className="flex items-center gap-1.5 mt-2 text-xs text-emerald-500">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  {tokenSet.hubSymbol} ({tokenSet.hubDecimals} decimals)
+                                </div>
+                              </div>
+
                               {/* L2 Token Input */}
                               <div>
                                 <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--oz-text-muted)' }}>
-                                  {pair.hubSymbol} Address on Your L2
+                                  {tokenSet.hubSymbol} Address on Your L2
                                 </label>
                                 <input
                                   type="text"
-                                  value={pair.l2Address}
-                                  onChange={(e) => updateTokenPairL2Address(pair.id, e.target.value)}
+                                  value={tokenSet.l2Address}
+                                  onChange={(e) => updateTokenSetL2Address(tokenSet.id, e.target.value)}
                                   placeholder="0x... (Enter token address)"
                                   className="oz-input font-mono text-xs"
                                 />
-                                {pair.l2Loading ? (
+                                {tokenSet.l2Loading ? (
                                   <div className="flex items-center gap-1.5 mt-2 text-xs" style={{ color: 'var(--oz-text-muted)' }}>
                                     <Loader2 className="w-3 h-3 animate-spin" style={{ color: 'var(--oz-blue)' }} />
                                     Fetching token info...
                                   </div>
-                                ) : pair.l2Symbol ? (
+                                ) : tokenSet.l2Symbol ? (
                                   <div className="flex items-center gap-1.5 mt-2 text-xs text-emerald-500">
                                     <CheckCircle2 className="w-3 h-3" />
-                                    {pair.l2Symbol} ({pair.l2Decimals} decimals)
+                                    {tokenSet.l2Symbol} ({tokenSet.l2Decimals} decimals)
                                   </div>
                                 ) : null}
-                              </div>
-                              
-                              {/* HUB Token Info (Read-only) */}
-                              <div>
-                                <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--oz-text-muted)' }}>
-                                  {pair.hubSymbol} Address on HUB
-                                </label>
-                                <div className="px-3 py-2 rounded-lg font-mono text-xs"
-                                  style={{ background: 'var(--oz-bg)', border: '1px solid var(--oz-border)', color: 'var(--oz-text-muted)' }}>
-                                  {pair.hubAddress.slice(0, 14)}...{pair.hubAddress.slice(-8)}
-                                </div>
-                                <div className="flex items-center gap-1.5 mt-2 text-xs text-emerald-500">
-                                  <CheckCircle2 className="w-3 h-3" />
-                                  {pair.hubSymbol} ({pair.hubDecimals} decimals)
-                                </div>
                               </div>
                             </div>
                           </div>
                         ) : (
                           /* Configured - Show normal display */
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-6">
-                              {/* L2 Token Info */}
+                            <div className="flex items-center gap-4">
+                              {/* L1 Token Info */}
                               <div className="text-center">
                                 <div className="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm mx-auto mb-1"
-                                  style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
-                                  {pair.l2Symbol.slice(0, 2)}
+                                  style={{ background: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6' }}>
+                                  {tokenSet.l1Symbol.slice(0, 2)}
                                 </div>
-                                <div className="text-xs font-medium" style={{ color: 'var(--oz-text)' }}>{pair.l2Symbol}</div>
-                                <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>Your L2</div>
+                                <div className="text-xs font-medium" style={{ color: 'var(--oz-text)' }}>{tokenSet.l1Symbol}</div>
+                                <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>L1</div>
                               </div>
 
                               {/* Arrow */}
-                              <div className="flex items-center gap-2" style={{ color: 'var(--oz-text-muted)' }}>
-                                <div className="w-8 h-px" style={{ background: 'var(--oz-border)' }} />
-                                <span className="text-xs">↔</span>
-                                <div className="w-8 h-px" style={{ background: 'var(--oz-border)' }} />
+                              <div className="flex items-center" style={{ color: 'var(--oz-text-muted)' }}>
+                                <div className="w-4 h-px" style={{ background: 'var(--oz-border)' }} />
+                                <span className="text-xs mx-1">→</span>
+                                <div className="w-4 h-px" style={{ background: 'var(--oz-border)' }} />
                               </div>
 
                               {/* HUB Token Info */}
                               <div className="text-center">
                                 <div className="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm mx-auto mb-1"
                                   style={{ background: 'var(--oz-blue-light)', color: 'var(--oz-blue)' }}>
-                                  {pair.hubSymbol.slice(0, 2)}
+                                  {tokenSet.hubSymbol.slice(0, 2)}
                                 </div>
-                                <div className="text-xs font-medium" style={{ color: 'var(--oz-text)' }}>{pair.hubSymbol}</div>
+                                <div className="text-xs font-medium" style={{ color: 'var(--oz-text)' }}>{tokenSet.hubSymbol}</div>
                                 <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>HUB</div>
+                              </div>
+
+                              {/* Arrow */}
+                              <div className="flex items-center" style={{ color: 'var(--oz-text-muted)' }}>
+                                <div className="w-4 h-px" style={{ background: 'var(--oz-border)' }} />
+                                <span className="text-xs mx-1">→</span>
+                                <div className="w-4 h-px" style={{ background: 'var(--oz-border)' }} />
+                              </div>
+
+                              {/* L2 Token Info */}
+                              <div className="text-center">
+                                <div className="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm mx-auto mb-1"
+                                  style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+                                  {tokenSet.l2Symbol.slice(0, 2)}
+                                </div>
+                                <div className="text-xs font-medium" style={{ color: 'var(--oz-text)' }}>{tokenSet.l2Symbol}</div>
+                                <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>Your L2</div>
                               </div>
                             </div>
 
                             {/* Addresses */}
-                            <div className="hidden md:block text-xs font-mono" style={{ color: 'var(--oz-text-muted)' }}>
-                              <div>{pair.l2Address.slice(0, 10)}...{pair.l2Address.slice(-6)}</div>
-                              <div>{pair.hubAddress.slice(0, 10)}...{pair.hubAddress.slice(-6)}</div>
+                            <div className="hidden lg:block text-xs font-mono" style={{ color: 'var(--oz-text-muted)' }}>
+                              <div>L1: {tokenSet.l1Address.slice(0, 8)}...{tokenSet.l1Address.slice(-4)}</div>
+                              <div>HUB: {tokenSet.hubAddress.slice(0, 8)}...{tokenSet.hubAddress.slice(-4)}</div>
+                              <div>L2: {tokenSet.l2Address.slice(0, 8)}...{tokenSet.l2Address.slice(-4)}</div>
                             </div>
 
                             {/* Delete Button */}
                             <button
-                              onClick={() => removeTokenPair(pair.id)}
+                              onClick={() => removeTokenSet(tokenSet.id)}
                               className="p-2 rounded-lg hover:bg-red-500/10 transition-colors"
                               style={{ color: 'var(--oz-text-muted)' }}
                             >
@@ -952,40 +1011,40 @@ export default function NewNetworkOnboarding() {
                 </div>
               )}
 
-              {/* Add Token Pair Form */}
+              {/* Add Token Set Form */}
               <div className="p-6 rounded-xl" style={{ background: 'var(--oz-surface)', border: '1px solid var(--oz-border)' }}>
-                <h3 className="font-medium mb-4" style={{ color: 'var(--oz-text)' }}>Add New Token Pair</h3>
+                <h3 className="font-medium mb-4" style={{ color: 'var(--oz-text)' }}>Add New Token Set</h3>
                 
-                <div className="grid md:grid-cols-2 gap-6 mb-6">
-                  {/* L2 Token */}
+                <div className="grid md:grid-cols-3 gap-6 mb-6">
+                  {/* L1 Token */}
                   <div>
                     <label className="block text-sm font-medium mb-2" style={{ color: 'var(--oz-text)' }}>
-                      Token on Your L2
+                      Token on {parentNetworks.find(p => p.id === formData.parentChain)?.name || 'L1'}
                     </label>
                     <input
                       type="text"
-                      value={newTokenPair.l2Address}
-                      onChange={(e) => handleL2AddressChange(e.target.value)}
+                      value={newTokenSet.l1Address}
+                      onChange={(e) => handleL1AddressChange(e.target.value)}
                       placeholder="0x... (Token address)"
                       className="oz-input font-mono text-sm mb-3"
                     />
                     
-                    {newTokenPair.l2Loading ? (
+                    {newTokenSet.l1Loading ? (
                       <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--oz-text-muted)' }}>
                         <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--oz-blue)' }} />
-                        Fetching token info from RPC...
+                        Fetching token info...
                       </div>
-                    ) : newTokenPair.l2Symbol ? (
+                    ) : newTokenSet.l1Symbol ? (
                       <div className="p-3 rounded-lg" style={{ background: 'var(--oz-bg)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
                         <div className="flex items-center gap-2 text-sm">
                           <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          <span className="font-medium" style={{ color: 'var(--oz-text)' }}>{newTokenPair.l2Symbol}</span>
-                          <span style={{ color: 'var(--oz-text-muted)' }}>({newTokenPair.l2Decimals} decimals)</span>
+                          <span className="font-medium" style={{ color: 'var(--oz-text)' }}>{newTokenSet.l1Symbol}</span>
+                          <span style={{ color: 'var(--oz-text-muted)' }}>({newTokenSet.l1Decimals} decimals)</span>
                         </div>
                       </div>
                     ) : (
                       <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>
-                        Enter a valid token address to auto-fetch symbol and decimals
+                        Enter L1 token address
                       </div>
                     )}
                   </div>
@@ -997,40 +1056,73 @@ export default function NewNetworkOnboarding() {
                     </label>
                     <input
                       type="text"
-                      value={newTokenPair.hubAddress}
+                      value={newTokenSet.hubAddress}
                       onChange={(e) => handleHubAddressChange(e.target.value)}
                       placeholder="0x... (Token address)"
                       className="oz-input font-mono text-sm mb-3"
                     />
                     
-                    {newTokenPair.hubLoading ? (
+                    {newTokenSet.hubLoading ? (
                       <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--oz-text-muted)' }}>
                         <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--oz-blue)' }} />
-                        Fetching token info from RPC...
+                        Fetching token info...
                       </div>
-                    ) : newTokenPair.hubSymbol ? (
+                    ) : newTokenSet.hubSymbol ? (
                       <div className="p-3 rounded-lg" style={{ background: 'var(--oz-bg)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
                         <div className="flex items-center gap-2 text-sm">
                           <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          <span className="font-medium" style={{ color: 'var(--oz-text)' }}>{newTokenPair.hubSymbol}</span>
-                          <span style={{ color: 'var(--oz-text-muted)' }}>({newTokenPair.hubDecimals} decimals)</span>
+                          <span className="font-medium" style={{ color: 'var(--oz-text)' }}>{newTokenSet.hubSymbol}</span>
+                          <span style={{ color: 'var(--oz-text-muted)' }}>({newTokenSet.hubDecimals} decimals)</span>
                         </div>
                       </div>
                     ) : (
                       <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>
-                        Enter a valid token address to auto-fetch symbol and decimals
+                        Enter HUB token address
+                      </div>
+                    )}
+                  </div>
+
+                  {/* L2 Token */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--oz-text)' }}>
+                      Token on Your L2
+                    </label>
+                    <input
+                      type="text"
+                      value={newTokenSet.l2Address}
+                      onChange={(e) => handleL2AddressChange(e.target.value)}
+                      placeholder="0x... (Token address)"
+                      className="oz-input font-mono text-sm mb-3"
+                    />
+                    
+                    {newTokenSet.l2Loading ? (
+                      <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--oz-text-muted)' }}>
+                        <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--oz-blue)' }} />
+                        Fetching token info...
+                      </div>
+                    ) : newTokenSet.l2Symbol ? (
+                      <div className="p-3 rounded-lg" style={{ background: 'var(--oz-bg)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                        <div className="flex items-center gap-2 text-sm">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                          <span className="font-medium" style={{ color: 'var(--oz-text)' }}>{newTokenSet.l2Symbol}</span>
+                          <span style={{ color: 'var(--oz-text-muted)' }}>({newTokenSet.l2Decimals} decimals)</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>
+                        Enter L2 token address
                       </div>
                     )}
                   </div>
                 </div>
 
                 <button
-                  onClick={addTokenPair}
-                  disabled={!newTokenPair.l2Symbol || !newTokenPair.hubSymbol}
+                  onClick={addTokenSet}
+                  disabled={!newTokenSet.l1Symbol || !newTokenSet.hubSymbol || !newTokenSet.l2Symbol}
                   className="w-full oz-btn-primary py-3 flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   <Plus className="w-5 h-5" />
-                  Add Token Pair
+                  Add Token Set
                 </button>
               </div>
 
@@ -1038,10 +1130,10 @@ export default function NewNetworkOnboarding() {
               <div className="flex items-start gap-3 p-4 rounded-xl mt-6" style={{ background: 'var(--oz-blue-light)', border: '1px solid rgba(78, 94, 228, 0.2)' }}>
                 <Info className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: 'var(--oz-blue)' }} />
                 <div className="text-sm" style={{ color: 'var(--oz-text-muted)' }}>
-                  <p className="font-medium mb-1" style={{ color: 'var(--oz-blue)' }}>Token Pair Mapping</p>
+                  <p className="font-medium mb-1" style={{ color: 'var(--oz-blue)' }}>Token Set Mapping</p>
                   <p>
-                    Each pair maps a token on your L2 to its corresponding token on the HUB chain. 
-                    Token info is automatically fetched from the chain RPCs.
+                    Each token set maps the same token across L1, HUB, and your L2 chain. 
+                    The solver holds liquidity on HUB and L2 (not on L1). Token info is automatically fetched from chain RPCs.
                   </p>
                 </div>
               </div>
@@ -1117,8 +1209,8 @@ export default function NewNetworkOnboarding() {
                         </div>
                         
                         {/* Token liquidity on L2 */}
-                        {tokenPairs.filter(p => p.l2Symbol).map(pair => (
-                          <div key={`l2-${pair.id}`} className="flex items-center justify-between">
+                        {tokenSets.filter(s => s.l2Symbol).map(tokenSet => (
+                          <div key={`l2-${tokenSet.id}`} className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               {verifyingDeposits ? (
                                 <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--oz-blue)' }} />
@@ -1127,9 +1219,9 @@ export default function NewNetworkOnboarding() {
                               ) : (
                                 <Circle className="w-4 h-4" style={{ color: 'var(--oz-text-muted)' }} />
                               )}
-                              <span className="text-sm" style={{ color: 'var(--oz-text)' }}>{pair.l2Symbol}</span>
+                              <span className="text-sm" style={{ color: 'var(--oz-text)' }}>{tokenSet.l2Symbol}</span>
                             </div>
-                            <span className="text-sm font-mono" style={{ color: 'var(--oz-text)' }}>1,000 {pair.l2Symbol}</span>
+                            <span className="text-sm font-mono" style={{ color: 'var(--oz-text)' }}>1,000 {tokenSet.l2Symbol}</span>
                           </div>
                         ))}
                       </div>
@@ -1175,8 +1267,8 @@ export default function NewNetworkOnboarding() {
                         </div>
                         
                         {/* Token liquidity on HUB */}
-                        {tokenPairs.filter(p => p.l2Symbol).map(pair => (
-                          <div key={`hub-${pair.id}`} className="flex items-center justify-between">
+                        {tokenSets.filter(s => s.l2Symbol).map(tokenSet => (
+                          <div key={`hub-${tokenSet.id}`} className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               {verifyingDeposits ? (
                                 <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--oz-blue)' }} />
@@ -1185,22 +1277,22 @@ export default function NewNetworkOnboarding() {
                               ) : (
                                 <Circle className="w-4 h-4" style={{ color: 'var(--oz-text-muted)' }} />
                               )}
-                              <span className="text-sm" style={{ color: 'var(--oz-text)' }}>{pair.hubSymbol}</span>
+                              <span className="text-sm" style={{ color: 'var(--oz-text)' }}>{tokenSet.hubSymbol}</span>
                             </div>
-                            <span className="text-sm font-mono" style={{ color: 'var(--oz-text)' }}>1,000 {pair.hubSymbol}</span>
+                            <span className="text-sm font-mono" style={{ color: 'var(--oz-text)' }}>1,000 {tokenSet.hubSymbol}</span>
                           </div>
                         ))}
                       </div>
                     </div>
 
                     {/* Unconfigured tokens warning */}
-                    {tokenPairs.some(p => !p.l2Symbol) && (
+                    {tokenSets.some(s => !s.l2Symbol) && (
                       <div className="flex items-start gap-3 p-4 rounded-xl" style={{ background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
                         <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
                         <div className="text-sm">
                           <p className="font-medium text-amber-500 mb-1">Token Configuration Incomplete</p>
                           <p style={{ color: 'var(--oz-text-muted)' }}>
-                            {tokenPairs.filter(p => !p.l2Symbol).map(p => p.hubSymbol).join(', ')} token pair(s) missing L2 addresses. 
+                            {tokenSets.filter(s => !s.l2Symbol).map(s => s.hubSymbol).join(', ')} token set(s) missing L2 addresses. 
                             Go back to configure them.
                           </p>
                         </div>
@@ -1325,8 +1417,8 @@ export default function NewNetworkOnboarding() {
                         </div>
                       )}
                       <div className="flex justify-between">
-                        <span style={{ color: 'var(--oz-text-muted)' }}>Token Pairs</span>
-                        <span style={{ color: 'var(--oz-text)' }}>{tokenPairs.filter(p => p.l2Symbol).length} configured</span>
+                        <span style={{ color: 'var(--oz-text-muted)' }}>Token Sets</span>
+                        <span style={{ color: 'var(--oz-text)' }}>{tokenSets.filter(s => s.l2Symbol).length} configured</span>
                       </div>
                       <div className="flex justify-between">
                         <span style={{ color: 'var(--oz-text-muted)' }}>Notifications</span>

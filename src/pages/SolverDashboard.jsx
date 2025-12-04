@@ -18,14 +18,16 @@ import {
   Shield
 } from 'lucide-react'
 
+// Token sets include L1, HUB, and L2 addresses (solver only holds liquidity on HUB and L2)
 const mockTokens = [
   {
     id: 1,
     name: 'USD Coin',
     symbol: 'USDC',
-    newChainAddress: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+    l1Address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
     hubChainAddress: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-    newChainBalance: 45230.50,
+    l2Address: '0x7F5c764cBc14f9669B88837ca1490cCa17c31607',
+    l2Balance: 45230.50,
     hubChainBalance: 28150.00,
     status: 'active',
   },
@@ -33,9 +35,10 @@ const mockTokens = [
     id: 2,
     name: 'Ethereum',
     symbol: 'ETH',
-    newChainAddress: '0x0000000000000000000000000000000000000000',
+    l1Address: '0x0000000000000000000000000000000000000000',
     hubChainAddress: '0x4200000000000000000000000000000000000006',
-    newChainBalance: 15.5,
+    l2Address: '0x0000000000000000000000000000000000000000',
+    l2Balance: 15.5,
     hubChainBalance: 8.2,
     status: 'active',
   },
@@ -43,9 +46,10 @@ const mockTokens = [
     id: 3,
     name: 'Wrapped Bitcoin',
     symbol: 'WBTC',
-    newChainAddress: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
+    l1Address: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
     hubChainAddress: '0x68f180fcCe6836688e9084f035309E29Bf0A2095',
-    newChainBalance: 0.85,
+    l2Address: '0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6',
+    l2Balance: 0.85,
     hubChainBalance: 0.42,
     status: 'low_liquidity',
   },
@@ -92,8 +96,9 @@ export default function SolverDashboard() {
   const [newToken, setNewToken] = useState({
     name: '',
     symbol: '',
-    newChainAddress: '',
+    l1Address: '',
     hubChainAddress: '',
+    l2Address: '',
   })
 
   // Connect wallet handler
@@ -110,7 +115,7 @@ export default function SolverDashboard() {
     const token = {
       ...newToken,
       id: tokens.length + 1,
-      newChainBalance: 0,
+      l2Balance: 0,
       hubChainBalance: 0,
       status: 'active',
     }
@@ -119,8 +124,9 @@ export default function SolverDashboard() {
     setNewToken({
       name: '',
       symbol: '',
-      newChainAddress: '',
+      l1Address: '',
       hubChainAddress: '',
+      l2Address: '',
     })
   }
 
@@ -154,13 +160,13 @@ export default function SolverDashboard() {
           if (rebalanceData.direction === 'l2ToHub') {
             return {
               ...t,
-              newChainBalance: t.newChainBalance - amount,
+              l2Balance: t.l2Balance - amount,
               hubChainBalance: t.hubChainBalance + amount,
             }
           } else {
             return {
               ...t,
-              newChainBalance: t.newChainBalance + amount,
+              l2Balance: t.l2Balance + amount,
               hubChainBalance: t.hubChainBalance - amount,
             }
           }
@@ -176,17 +182,17 @@ export default function SolverDashboard() {
   // Calculate preview balances
   const getPreviewBalances = () => {
     if (!rebalanceToken || !rebalanceData.amount) {
-      return { l2: rebalanceToken?.newChainBalance || 0, hub: rebalanceToken?.hubChainBalance || 0 }
+      return { l2: rebalanceToken?.l2Balance || 0, hub: rebalanceToken?.hubChainBalance || 0 }
     }
     const amount = parseFloat(rebalanceData.amount) || 0
     if (rebalanceData.direction === 'l2ToHub') {
       return {
-        l2: rebalanceToken.newChainBalance - amount,
+        l2: rebalanceToken.l2Balance - amount,
         hub: rebalanceToken.hubChainBalance + amount,
       }
     } else {
       return {
-        l2: rebalanceToken.newChainBalance + amount,
+        l2: rebalanceToken.l2Balance + amount,
         hub: rebalanceToken.hubChainBalance - amount,
       }
     }
@@ -317,7 +323,7 @@ export default function SolverDashboard() {
         <div className="oz-card overflow-hidden">
           <div className="p-6" style={{ borderBottom: '1px solid var(--oz-border)' }}>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <h2 className="text-xl font-semibold" style={{ color: 'var(--oz-text)' }}>Supported Token Pairs</h2>
+              <h2 className="text-xl font-semibold" style={{ color: 'var(--oz-text)' }}>Supported Token Sets</h2>
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--oz-text-muted)' }} />
@@ -372,9 +378,9 @@ export default function SolverDashboard() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="font-mono" style={{ color: 'var(--oz-text)' }}>{formatNumber(token.newChainBalance)}</div>
+                      <div className="font-mono" style={{ color: 'var(--oz-text)' }}>{formatNumber(token.l2Balance)}</div>
                       <div className="text-xs font-mono" style={{ color: 'var(--oz-text-muted)' }}>
-                        {token.newChainAddress.slice(0, 6)}...{token.newChainAddress.slice(-4)}
+                        {token.l2Address.slice(0, 6)}...{token.l2Address.slice(-4)}
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -433,7 +439,7 @@ export default function SolverDashboard() {
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm" style={{ background: 'rgba(0,0,0,0.5)' }}>
             <div className="w-full max-w-lg rounded-2xl p-6 animate-fade-in" style={{ background: 'var(--oz-card)', border: '1px solid var(--oz-border)' }}>
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold" style={{ color: 'var(--oz-text)' }}>Add New Token Pair</h3>
+                <h3 className="text-xl font-semibold" style={{ color: 'var(--oz-text)' }}>Add New Token Set</h3>
                 <button
                   onClick={() => setShowAddToken(false)}
                   className="p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
@@ -468,14 +474,15 @@ export default function SolverDashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--oz-text)' }}>L2 Chain Address</label>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--oz-text)' }}>L1 Address (Reference)</label>
                   <input
                     type="text"
-                    value={newToken.newChainAddress}
-                    onChange={(e) => setNewToken({ ...newToken, newChainAddress: e.target.value })}
+                    value={newToken.l1Address}
+                    onChange={(e) => setNewToken({ ...newToken, l1Address: e.target.value })}
                     placeholder="0x..."
                     className="oz-input font-mono"
                   />
+                  <p className="text-xs mt-1" style={{ color: 'var(--oz-text-muted)' }}>Token address on the parent L1 chain</p>
                 </div>
 
                 <div>
@@ -484,6 +491,17 @@ export default function SolverDashboard() {
                     type="text"
                     value={newToken.hubChainAddress}
                     onChange={(e) => setNewToken({ ...newToken, hubChainAddress: e.target.value })}
+                    placeholder="0x..."
+                    className="oz-input font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--oz-text)' }}>L2 Chain Address</label>
+                  <input
+                    type="text"
+                    value={newToken.l2Address}
+                    onChange={(e) => setNewToken({ ...newToken, l2Address: e.target.value })}
                     placeholder="0x..."
                     className="oz-input font-mono"
                   />
@@ -533,27 +551,28 @@ export default function SolverDashboard() {
 
               <div className="space-y-4">
                 <div className="p-4 rounded-xl" style={{ background: 'var(--oz-surface)', border: '1px solid var(--oz-border)' }}>
-                  <h4 className="text-sm font-medium mb-3" style={{ color: 'var(--oz-text)' }}>Balances</h4>
+                  <h4 className="text-sm font-medium mb-3" style={{ color: 'var(--oz-text)' }}>Solver Balances</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <div className="text-xs mb-1" style={{ color: 'var(--oz-text-muted)' }}>L2 Chain</div>
-                      <div className="font-mono text-lg" style={{ color: 'var(--oz-text)' }}>{formatNumber(selectedToken.newChainBalance)}</div>
+                      <div className="font-mono text-lg" style={{ color: 'var(--oz-text)' }}>{formatNumber(selectedToken.l2Balance)}</div>
                     </div>
                     <div>
                       <div className="text-xs mb-1" style={{ color: 'var(--oz-text-muted)' }}>HUB Chain</div>
                       <div className="font-mono text-lg" style={{ color: 'var(--oz-text)' }}>{formatNumber(selectedToken.hubChainBalance)}</div>
                     </div>
                   </div>
+                  <p className="text-xs mt-3" style={{ color: 'var(--oz-text-muted)' }}>Solver holds liquidity on HUB and L2 only</p>
                 </div>
 
                 <div className="p-4 rounded-xl" style={{ background: 'var(--oz-surface)', border: '1px solid var(--oz-border)' }}>
-                  <h4 className="text-sm font-medium mb-3" style={{ color: 'var(--oz-text)' }}>Contract Addresses</h4>
+                  <h4 className="text-sm font-medium mb-3" style={{ color: 'var(--oz-text)' }}>Token Addresses</h4>
                   <div className="space-y-3">
                     <div>
-                      <div className="text-xs mb-1" style={{ color: 'var(--oz-text-muted)' }}>L2 Chain</div>
+                      <div className="text-xs mb-1" style={{ color: 'var(--oz-text-muted)' }}>L1 (Reference)</div>
                       <div className="flex items-center gap-2">
-                        <code className="font-mono text-sm flex-1 truncate" style={{ color: 'var(--oz-text)' }}>{selectedToken.newChainAddress}</code>
-                        <button onClick={() => copyAddress(selectedToken.newChainAddress)} className="p-1 hover:opacity-70 transition-opacity" style={{ color: 'var(--oz-text-muted)' }}>
+                        <code className="font-mono text-sm flex-1 truncate" style={{ color: 'var(--oz-text)' }}>{selectedToken.l1Address}</code>
+                        <button onClick={() => copyAddress(selectedToken.l1Address)} className="p-1 hover:opacity-70 transition-opacity" style={{ color: 'var(--oz-text-muted)' }}>
                           <Copy className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -563,6 +582,15 @@ export default function SolverDashboard() {
                       <div className="flex items-center gap-2">
                         <code className="font-mono text-sm flex-1 truncate" style={{ color: 'var(--oz-text)' }}>{selectedToken.hubChainAddress}</code>
                         <button onClick={() => copyAddress(selectedToken.hubChainAddress)} className="p-1 hover:opacity-70 transition-opacity" style={{ color: 'var(--oz-text-muted)' }}>
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs mb-1" style={{ color: 'var(--oz-text-muted)' }}>L2 Chain</div>
+                      <div className="flex items-center gap-2">
+                        <code className="font-mono text-sm flex-1 truncate" style={{ color: 'var(--oz-text)' }}>{selectedToken.l2Address}</code>
+                        <button onClick={() => copyAddress(selectedToken.l2Address)} className="p-1 hover:opacity-70 transition-opacity" style={{ color: 'var(--oz-text-muted)' }}>
                           <Copy className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -633,7 +661,7 @@ export default function SolverDashboard() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <div className="text-xs mb-1" style={{ color: 'var(--oz-text-muted)' }}>L2 Chain</div>
-                      <div className="font-mono text-lg" style={{ color: 'var(--oz-text)' }}>{formatNumber(rebalanceToken.newChainBalance)}</div>
+                      <div className="font-mono text-lg" style={{ color: 'var(--oz-text)' }}>{formatNumber(rebalanceToken.l2Balance)}</div>
                     </div>
                     <div>
                       <div className="text-xs mb-1" style={{ color: 'var(--oz-text-muted)' }}>HUB Chain</div>
@@ -687,7 +715,7 @@ export default function SolverDashboard() {
                       <button 
                         onClick={() => {
                           const maxAmount = rebalanceData.direction === 'l2ToHub' 
-                            ? rebalanceToken.newChainBalance 
+                            ? rebalanceToken.l2Balance 
                             : rebalanceToken.hubChainBalance
                           setRebalanceData({ ...rebalanceData, amount: maxAmount.toString() })
                         }}
@@ -699,7 +727,7 @@ export default function SolverDashboard() {
                     </div>
                   </div>
                   <p className="text-xs mt-2" style={{ color: 'var(--oz-text-muted)' }}>
-                    Available: {formatNumber(rebalanceData.direction === 'l2ToHub' ? rebalanceToken.newChainBalance : rebalanceToken.hubChainBalance)} {rebalanceToken.symbol}
+                    Available: {formatNumber(rebalanceData.direction === 'l2ToHub' ? rebalanceToken.l2Balance : rebalanceToken.hubChainBalance)} {rebalanceToken.symbol}
                   </p>
                 </div>
 
@@ -830,7 +858,7 @@ export default function SolverDashboard() {
                       <span style={{ color: 'var(--oz-text-muted)' }}>Available Balance</span>
                       <span className="font-mono font-medium" style={{ color: 'var(--oz-text)' }}>
                         {withdrawData.chain === 'l2' 
-                          ? formatNumber(tokens.find(t => t.symbol === withdrawData.token)?.newChainBalance || 0)
+                          ? formatNumber(tokens.find(t => t.symbol === withdrawData.token)?.l2Balance || 0)
                           : formatNumber(tokens.find(t => t.symbol === withdrawData.token)?.hubChainBalance || 0)
                         } {withdrawData.token}
                       </span>
@@ -852,7 +880,7 @@ export default function SolverDashboard() {
                     <button 
                       onClick={() => {
                         const balance = withdrawData.chain === 'l2' 
-                          ? tokens.find(t => t.symbol === withdrawData.token)?.newChainBalance 
+                          ? tokens.find(t => t.symbol === withdrawData.token)?.l2Balance 
                           : tokens.find(t => t.symbol === withdrawData.token)?.hubChainBalance
                         setWithdrawData({ ...withdrawData, amount: balance?.toString() || '' })
                       }}
@@ -920,7 +948,7 @@ export default function SolverDashboard() {
               </div>
 
               {/* Balance Warning */}
-              {(tokenToDelete.newChainBalance > 0 || tokenToDelete.hubChainBalance > 0) && (
+              {(tokenToDelete.l2Balance > 0 || tokenToDelete.hubChainBalance > 0) && (
                 <div className="p-4 rounded-xl mb-5 border" style={{ background: 'rgba(245, 158, 11, 0.1)', borderColor: 'rgba(245, 158, 11, 0.3)' }}>
                   <div className="flex items-start gap-3">
                     <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
@@ -932,7 +960,7 @@ export default function SolverDashboard() {
                       <div className="grid grid-cols-2 gap-3 text-sm">
                         <div className="p-2 rounded-lg" style={{ background: 'var(--oz-surface)' }}>
                           <div className="text-xs mb-1" style={{ color: 'var(--oz-text-muted)' }}>L2 Chain</div>
-                          <div className="font-mono font-medium" style={{ color: 'var(--oz-text)' }}>{formatNumber(tokenToDelete.newChainBalance)} {tokenToDelete.symbol}</div>
+                          <div className="font-mono font-medium" style={{ color: 'var(--oz-text)' }}>{formatNumber(tokenToDelete.l2Balance)} {tokenToDelete.symbol}</div>
                         </div>
                         <div className="p-2 rounded-lg" style={{ background: 'var(--oz-surface)' }}>
                           <div className="text-xs mb-1" style={{ color: 'var(--oz-text-muted)' }}>HUB Chain</div>
@@ -945,7 +973,7 @@ export default function SolverDashboard() {
               )}
 
               {/* Zero Balance Confirmation */}
-              {tokenToDelete.newChainBalance === 0 && tokenToDelete.hubChainBalance === 0 && (
+              {tokenToDelete.l2Balance === 0 && tokenToDelete.hubChainBalance === 0 && (
                 <div className="p-4 rounded-xl mb-5" style={{ background: 'var(--oz-surface)', border: '1px solid var(--oz-border)' }}>
                   <div className="flex items-center gap-3">
                     <CheckCircle2 className="w-5 h-5" style={{ color: 'var(--oz-success)' }} />
@@ -971,7 +999,7 @@ export default function SolverDashboard() {
                   onClick={confirmDeleteToken}
                   className="flex-1 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 bg-red-500 hover:bg-red-600 text-white"
                 >
-                  {(tokenToDelete.newChainBalance > 0 || tokenToDelete.hubChainBalance > 0) ? 'Delete Anyway' : 'Delete Token'}
+                  {(tokenToDelete.l2Balance > 0 || tokenToDelete.hubChainBalance > 0) ? 'Delete Anyway' : 'Delete Token'}
                 </button>
               </div>
             </div>
