@@ -3,21 +3,19 @@ import {
   Settings, 
   Plus,
   Trash2,
-  RefreshCw,
-  ArrowUpRight,
-  ArrowDownRight,
   Wallet,
   Activity,
   TrendingUp,
-  Clock,
   AlertTriangle,
   CheckCircle2,
   Copy,
-  ExternalLink,
-  ChevronDown,
   X,
   Search,
-  Filter
+  Hash,
+  ArrowRightLeft,
+  Loader2,
+  ArrowRight,
+  Shield
 } from 'lucide-react'
 
 const mockTokens = [
@@ -27,12 +25,8 @@ const mockTokens = [
     symbol: 'USDC',
     newChainAddress: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
     hubChainAddress: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-    newChainBalance: '45,230.50',
-    hubChainBalance: '28,150.00',
-    baseFee: '0.50',
-    percentFee: '0.05',
-    minAmount: '10',
-    maxAmount: '100,000',
+    newChainBalance: 45230.50,
+    hubChainBalance: 28150.00,
     status: 'active',
   },
   {
@@ -41,12 +35,8 @@ const mockTokens = [
     symbol: 'ETH',
     newChainAddress: '0x0000000000000000000000000000000000000000',
     hubChainAddress: '0x4200000000000000000000000000000000000006',
-    newChainBalance: '15.5',
-    hubChainBalance: '8.2',
-    baseFee: '0.001',
-    percentFee: '0.05',
-    minAmount: '0.01',
-    maxAmount: '50',
+    newChainBalance: 15.5,
+    hubChainBalance: 8.2,
     status: 'active',
   },
   {
@@ -55,88 +45,71 @@ const mockTokens = [
     symbol: 'WBTC',
     newChainAddress: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
     hubChainAddress: '0x68f180fcCe6836688e9084f035309E29Bf0A2095',
-    newChainBalance: '0.85',
-    hubChainBalance: '0.42',
-    baseFee: '0.0001',
-    percentFee: '0.08',
-    minAmount: '0.001',
-    maxAmount: '5',
+    newChainBalance: 0.85,
+    hubChainBalance: 0.42,
     status: 'low_liquidity',
-  },
-]
-
-const mockTransactions = [
-  {
-    id: '0x1234...5678',
-    type: 'inflow',
-    token: 'USDC',
-    amount: '5,000.00',
-    from: 'Base',
-    to: 'Your L2',
-    status: 'completed',
-    time: '2 min ago',
-  },
-  {
-    id: '0xabcd...ef01',
-    type: 'outflow',
-    token: 'ETH',
-    amount: '2.5',
-    from: 'Your L2',
-    to: 'Arbitrum',
-    status: 'pending',
-    time: '5 min ago',
-  },
-  {
-    id: '0x9876...5432',
-    type: 'inflow',
-    token: 'USDC',
-    amount: '12,500.00',
-    from: 'Optimism',
-    to: 'Your L2',
-    status: 'completed',
-    time: '15 min ago',
-  },
-  {
-    id: '0xfedc...ba98',
-    type: 'outflow',
-    token: 'WBTC',
-    amount: '0.15',
-    from: 'Your L2',
-    to: 'Ethereum',
-    status: 'completed',
-    time: '1 hour ago',
   },
 ]
 
 const stats = [
   { label: 'Total Volume (24h)', value: '$1.2M', change: '+12.5%', positive: true, icon: TrendingUp },
-  { label: 'Active Intents', value: '23', change: '', icon: Activity },
-  { label: 'Avg Fill Time', value: '4.2s', change: '-0.8s', positive: true, icon: Clock },
-  { label: 'Success Rate', value: '99.2%', change: '+0.3%', positive: true, icon: CheckCircle2 },
+  { label: 'Intents (24h)', value: '156', change: '+23', positive: true, icon: Activity },
+  { label: 'Total Intents', value: '12,847', change: '', icon: Hash },
 ]
 
+// Format number with commas
+const formatNumber = (num) => {
+  return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
 export default function SolverDashboard() {
+  // Auth state
+  const [isConnected, setIsConnected] = useState(false)
+  const [isConnecting, setIsConnecting] = useState(false)
+  const [connectedAddress, setConnectedAddress] = useState('')
+  
+  // Dashboard state
   const [tokens, setTokens] = useState(mockTokens)
   const [showAddToken, setShowAddToken] = useState(false)
   const [selectedToken, setSelectedToken] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [showWithdraw, setShowWithdraw] = useState(false)
+  const [showRebalance, setShowRebalance] = useState(false)
+  const [rebalanceToken, setRebalanceToken] = useState(null)
+  const [isRebalancing, setIsRebalancing] = useState(false)
+  const [withdrawData, setWithdrawData] = useState({
+    token: '',
+    amount: '',
+    chain: 'l2',
+    recipient: '',
+  })
+  const [rebalanceData, setRebalanceData] = useState({
+    amount: '',
+    direction: 'l2ToHub', // l2ToHub or hubToL2
+  })
   const [newToken, setNewToken] = useState({
     name: '',
     symbol: '',
     newChainAddress: '',
     hubChainAddress: '',
-    baseFee: '',
-    percentFee: '',
-    minAmount: '',
-    maxAmount: '',
   })
+
+  // Connect wallet handler
+  const connectWallet = () => {
+    setIsConnecting(true)
+    setTimeout(() => {
+      setIsConnecting(false)
+      setIsConnected(true)
+      setConnectedAddress('0x742d35Cc6634C0532925a3b844Bc9e7595f2bD73')
+    }, 3000)
+  }
 
   const handleAddToken = () => {
     const token = {
       ...newToken,
       id: tokens.length + 1,
-      newChainBalance: '0',
-      hubChainBalance: '0',
+      newChainBalance: 0,
+      hubChainBalance: 0,
       status: 'active',
     }
     setTokens([...tokens, token])
@@ -146,10 +119,6 @@ export default function SolverDashboard() {
       symbol: '',
       newChainAddress: '',
       hubChainAddress: '',
-      baseFee: '',
-      percentFee: '',
-      minAmount: '',
-      maxAmount: '',
     })
   }
 
@@ -157,38 +126,180 @@ export default function SolverDashboard() {
     setTokens(tokens.filter(t => t.id !== id))
   }
 
+  const openRebalanceModal = (token) => {
+    setRebalanceToken(token)
+    setRebalanceData({ amount: '', direction: 'l2ToHub' })
+    setShowRebalance(true)
+  }
+
+  const executeRebalance = () => {
+    if (!rebalanceToken || !rebalanceData.amount) return
+    
+    setIsRebalancing(true)
+    setTimeout(() => {
+      const amount = parseFloat(rebalanceData.amount) || 0
+      setTokens(tokens.map(t => {
+        if (t.id === rebalanceToken.id) {
+          if (rebalanceData.direction === 'l2ToHub') {
+            return {
+              ...t,
+              newChainBalance: t.newChainBalance - amount,
+              hubChainBalance: t.hubChainBalance + amount,
+            }
+          } else {
+            return {
+              ...t,
+              newChainBalance: t.newChainBalance + amount,
+              hubChainBalance: t.hubChainBalance - amount,
+            }
+          }
+        }
+        return t
+      }))
+      setIsRebalancing(false)
+      setShowRebalance(false)
+      setRebalanceToken(null)
+    }, 2000)
+  }
+
+  // Calculate preview balances
+  const getPreviewBalances = () => {
+    if (!rebalanceToken || !rebalanceData.amount) {
+      return { l2: rebalanceToken?.newChainBalance || 0, hub: rebalanceToken?.hubChainBalance || 0 }
+    }
+    const amount = parseFloat(rebalanceData.amount) || 0
+    if (rebalanceData.direction === 'l2ToHub') {
+      return {
+        l2: rebalanceToken.newChainBalance - amount,
+        hub: rebalanceToken.hubChainBalance + amount,
+      }
+    } else {
+      return {
+        l2: rebalanceToken.newChainBalance + amount,
+        hub: rebalanceToken.hubChainBalance - amount,
+      }
+    }
+  }
+
   const copyAddress = (address) => {
     navigator.clipboard.writeText(address)
+  }
+
+  // Login Screen
+  if (!isConnected) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="max-w-md w-full">
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-oz-blue to-oz-purple flex items-center justify-center mx-auto mb-6">
+              <Shield className="w-10 h-10 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold mb-3">Solver Dashboard</h1>
+            <p className="text-oz-text">Connect your wallet to access the solver management dashboard.</p>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-oz-card border border-oz-border">
+            <div className="space-y-4 mb-6">
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-oz-darker border border-oz-border">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                <span className="text-sm">View token balances and transactions</span>
+              </div>
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-oz-darker border border-oz-border">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                <span className="text-sm">Rebalance liquidity across chains</span>
+              </div>
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-oz-darker border border-oz-border">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                <span className="text-sm">Withdraw funds to external addresses</span>
+              </div>
+            </div>
+
+            <button
+              onClick={connectWallet}
+              disabled={isConnecting}
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-oz-blue to-oz-purple hover:opacity-90 disabled:opacity-70 text-white font-semibold transition-all flex items-center justify-center gap-3"
+            >
+              {isConnecting ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Connecting...
+                </>
+              ) : (
+                <>
+                  <Wallet className="w-5 h-5" />
+                  Connect Wallet
+                </>
+              )}
+            </button>
+
+            <p className="text-xs text-oz-text text-center mt-4">
+              Only authorized solver operators can access this dashboard.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen pt-24 pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-oz-blue/20 flex items-center justify-center">
-                <Settings className="w-5 h-5 text-oz-blue" />
+        {/* Network Header - Prominent */}
+        <div className="p-8 rounded-2xl bg-gradient-to-br from-oz-card to-oz-darker border border-oz-border mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            {/* Network Name with Status */}
+            <div>
+              <div className="flex items-center gap-4 mb-3">
+                <h1 className="text-4xl font-bold">My L2 Chain</h1>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                  </span>
+                  <span className="text-sm font-medium text-emerald-400">Active</span>
+                </div>
               </div>
-              <h1 className="text-3xl font-bold">Solver Dashboard</h1>
+              <div className="flex items-center gap-2 text-oz-text">
+                <span>Execution Address:</span>
+                <code className="font-mono text-white">0x742d...bD73</code>
+                <button onClick={() => copyAddress('0x742d35Cc6634C0532925a3b844Bc9e7595f2bD73')} className="hover:text-white transition-colors">
+                  <Copy className="w-4 h-4" />
+                </button>
+              </div>
             </div>
-            <p className="text-oz-text">Manage your solver instance, tokens, and monitor performance.</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-oz-border hover:border-oz-blue/50 transition-colors">
-              <RefreshCw className="w-4 h-4" />
-              Rebalance
-            </button>
-            <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-oz-blue hover:bg-oz-blue/90 text-white font-medium transition-colors">
-              <Wallet className="w-4 h-4" />
-              Withdraw
-            </button>
+
+            {/* Chain Info */}
+            <div className="flex flex-wrap gap-4">
+              <div className="px-6 py-4 rounded-xl bg-oz-card border border-oz-border min-w-[140px]">
+                <div className="text-xs text-oz-text mb-1 uppercase tracking-wide">Parent (L1)</div>
+                <div className="text-xl font-bold text-white">Ethereum</div>
+              </div>
+              <div className="px-6 py-4 rounded-xl bg-oz-card border border-oz-border min-w-[140px]">
+                <div className="text-xs text-oz-text mb-1 uppercase tracking-wide">HUB Chain</div>
+                <div className="text-xl font-bold text-white">Base</div>
+              </div>
+            </div>
           </div>
         </div>
 
+        {/* Actions Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-oz-card border border-oz-border text-sm">
+            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span className="text-oz-text">Connected:</span>
+            <code className="font-mono text-white">{connectedAddress.slice(0, 6)}...{connectedAddress.slice(-4)}</code>
+          </div>
+          <button 
+            onClick={() => setShowWithdraw(true)}
+            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-oz-blue hover:bg-oz-blue/90 text-white font-medium transition-colors"
+          >
+            <Wallet className="w-4 h-4" />
+            Withdraw
+          </button>
+        </div>
+
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           {stats.map((stat) => (
             <div key={stat.label} className="p-5 rounded-2xl bg-oz-card border border-oz-border">
               <div className="flex items-center justify-between mb-3">
@@ -207,38 +318,11 @@ export default function SolverDashboard() {
           ))}
         </div>
 
-        {/* Solver Info Card */}
-        <div className="p-6 rounded-2xl bg-oz-card border border-oz-border mb-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="status-dot status-active" />
-                <span className="text-sm font-medium text-emerald-400">Solver Active</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-oz-text">
-                <span>Execution Address:</span>
-                <code className="font-mono">0x742d...bD73</code>
-                <button onClick={() => copyAddress('0x742d35Cc6634C0532925a3b844Bc9e7595f2bD73')} className="hover:text-white">
-                  <Copy className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-            <div className="flex flex-col md:items-end gap-1">
-              <div className="text-sm text-oz-text">
-                Network: <span className="text-white font-medium">My L2 Chain</span>
-              </div>
-              <div className="text-sm text-oz-text">
-                HUB: <span className="text-white font-medium">Base</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Tokens Section */}
-        <div className="rounded-2xl bg-oz-card border border-oz-border mb-8 overflow-hidden">
+        <div className="rounded-2xl bg-oz-card border border-oz-border overflow-hidden">
           <div className="p-6 border-b border-oz-border">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <h2 className="text-xl font-semibold">Supported Tokens</h2>
+              <h2 className="text-xl font-semibold">Supported Token Pairs</h2>
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <Search className="w-4 h-4 text-oz-text absolute left-3 top-1/2 -translate-y-1/2" />
@@ -269,8 +353,6 @@ export default function SolverDashboard() {
                   <th className="text-left text-sm font-medium text-oz-text px-6 py-4">Token</th>
                   <th className="text-left text-sm font-medium text-oz-text px-6 py-4">L2 Balance</th>
                   <th className="text-left text-sm font-medium text-oz-text px-6 py-4">HUB Balance</th>
-                  <th className="text-left text-sm font-medium text-oz-text px-6 py-4">Fees</th>
-                  <th className="text-left text-sm font-medium text-oz-text px-6 py-4">Limits</th>
                   <th className="text-left text-sm font-medium text-oz-text px-6 py-4">Status</th>
                   <th className="text-right text-sm font-medium text-oz-text px-6 py-4">Actions</th>
                 </tr>
@@ -295,22 +377,16 @@ export default function SolverDashboard() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="font-mono">{token.newChainBalance}</div>
+                      <div className="font-mono">{formatNumber(token.newChainBalance)}</div>
                       <div className="text-xs text-oz-text font-mono">
                         {token.newChainAddress.slice(0, 6)}...{token.newChainAddress.slice(-4)}
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="font-mono">{token.hubChainBalance}</div>
+                      <div className="font-mono">{formatNumber(token.hubChainBalance)}</div>
                       <div className="text-xs text-oz-text font-mono">
                         {token.hubChainAddress.slice(0, 6)}...{token.hubChainAddress.slice(-4)}
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm">{token.baseFee} {token.symbol} + {token.percentFee}%</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm">{token.minAmount} - {token.maxAmount}</div>
                     </td>
                     <td className="px-6 py-4">
                       {token.status === 'active' && (
@@ -328,6 +404,13 @@ export default function SolverDashboard() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => openRebalanceModal(token)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-oz-border hover:border-oz-blue/50 hover:bg-oz-blue/10 transition-colors text-sm"
+                        >
+                          <ArrowRightLeft className="w-3.5 h-3.5" />
+                          Rebalance
+                        </button>
                         <button
                           onClick={() => setSelectedToken(token)}
                           className="p-2 rounded-lg hover:bg-oz-border/50 transition-colors text-oz-text hover:text-white"
@@ -349,72 +432,12 @@ export default function SolverDashboard() {
           </div>
         </div>
 
-        {/* Recent Transactions */}
-        <div className="rounded-2xl bg-oz-card border border-oz-border overflow-hidden">
-          <div className="p-6 border-b border-oz-border">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Recent Transactions</h2>
-              <button className="flex items-center gap-1.5 text-sm text-oz-text hover:text-white transition-colors">
-                View All
-                <ExternalLink className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-
-          <div className="divide-y divide-oz-border/50">
-            {mockTransactions.map((tx) => (
-              <div key={tx.id} className="px-6 py-4 hover:bg-oz-darker/50 transition-colors">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                      tx.type === 'inflow' 
-                        ? 'bg-emerald-500/10 text-emerald-400' 
-                        : 'bg-blue-500/10 text-blue-400'
-                    }`}>
-                      {tx.type === 'inflow' ? (
-                        <ArrowDownRight className="w-5 h-5" />
-                      ) : (
-                        <ArrowUpRight className="w-5 h-5" />
-                      )}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{tx.amount} {tx.token}</span>
-                        <span className="text-oz-text text-sm">{tx.from} → {tx.to}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-oz-text">
-                        <code className="font-mono">{tx.id}</code>
-                        <span>•</span>
-                        <span>{tx.time}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    {tx.status === 'completed' && (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-medium">
-                        <CheckCircle2 className="w-3 h-3" />
-                        Completed
-                      </span>
-                    )}
-                    {tx.status === 'pending' && (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-medium">
-                        <Clock className="w-3 h-3" />
-                        Pending
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* Add Token Modal */}
         {showAddToken && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
             <div className="w-full max-w-lg rounded-2xl bg-oz-card border border-oz-border p-6 animate-fade-in">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold">Add New Token</h3>
+                <h3 className="text-xl font-semibold">Add New Token Pair</h3>
                 <button
                   onClick={() => setShowAddToken(false)}
                   className="p-2 rounded-lg hover:bg-oz-border/50 transition-colors"
@@ -468,52 +491,6 @@ export default function SolverDashboard() {
                     className="w-full px-4 py-2.5 rounded-xl bg-oz-darker border border-oz-border focus:border-oz-blue transition-colors text-sm font-mono"
                   />
                 </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Base Fee</label>
-                    <input
-                      type="text"
-                      value={newToken.baseFee}
-                      onChange={(e) => setNewToken({ ...newToken, baseFee: e.target.value })}
-                      placeholder="0.50"
-                      className="w-full px-4 py-2.5 rounded-xl bg-oz-darker border border-oz-border focus:border-oz-blue transition-colors text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Percent Fee (%)</label>
-                    <input
-                      type="text"
-                      value={newToken.percentFee}
-                      onChange={(e) => setNewToken({ ...newToken, percentFee: e.target.value })}
-                      placeholder="0.05"
-                      className="w-full px-4 py-2.5 rounded-xl bg-oz-darker border border-oz-border focus:border-oz-blue transition-colors text-sm"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Min Amount</label>
-                    <input
-                      type="text"
-                      value={newToken.minAmount}
-                      onChange={(e) => setNewToken({ ...newToken, minAmount: e.target.value })}
-                      placeholder="10"
-                      className="w-full px-4 py-2.5 rounded-xl bg-oz-darker border border-oz-border focus:border-oz-blue transition-colors text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Max Amount</label>
-                    <input
-                      type="text"
-                      value={newToken.maxAmount}
-                      onChange={(e) => setNewToken({ ...newToken, maxAmount: e.target.value })}
-                      placeholder="100,000"
-                      className="w-full px-4 py-2.5 rounded-xl bg-oz-darker border border-oz-border focus:border-oz-blue transition-colors text-sm"
-                    />
-                  </div>
-                </div>
               </div>
 
               <div className="flex items-center gap-3 mt-6">
@@ -534,7 +511,7 @@ export default function SolverDashboard() {
           </div>
         )}
 
-        {/* Edit Token Modal */}
+        {/* Token Details Modal */}
         {selectedToken && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
             <div className="w-full max-w-lg rounded-2xl bg-oz-card border border-oz-border p-6 animate-fade-in">
@@ -562,50 +539,56 @@ export default function SolverDashboard() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <div className="text-xs text-oz-text mb-1">L2 Chain</div>
-                      <div className="font-mono text-lg">{selectedToken.newChainBalance}</div>
+                      <div className="font-mono text-lg">{formatNumber(selectedToken.newChainBalance)}</div>
                     </div>
                     <div>
                       <div className="text-xs text-oz-text mb-1">HUB Chain</div>
-                      <div className="font-mono text-lg">{selectedToken.hubChainBalance}</div>
+                      <div className="font-mono text-lg">{formatNumber(selectedToken.hubChainBalance)}</div>
                     </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Base Fee</label>
-                    <input
-                      type="text"
-                      defaultValue={selectedToken.baseFee}
-                      className="w-full px-4 py-2.5 rounded-xl bg-oz-darker border border-oz-border focus:border-oz-blue transition-colors text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Percent Fee (%)</label>
-                    <input
-                      type="text"
-                      defaultValue={selectedToken.percentFee}
-                      className="w-full px-4 py-2.5 rounded-xl bg-oz-darker border border-oz-border focus:border-oz-blue transition-colors text-sm"
-                    />
+                <div className="p-4 rounded-xl bg-oz-darker border border-oz-border">
+                  <h4 className="text-sm font-medium mb-3">Contract Addresses</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="text-xs text-oz-text mb-1">L2 Chain</div>
+                      <div className="flex items-center gap-2">
+                        <code className="font-mono text-sm flex-1 truncate">{selectedToken.newChainAddress}</code>
+                        <button onClick={() => copyAddress(selectedToken.newChainAddress)} className="p-1 hover:text-white text-oz-text">
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-oz-text mb-1">HUB Chain</div>
+                      <div className="flex items-center gap-2">
+                        <code className="font-mono text-sm flex-1 truncate">{selectedToken.hubChainAddress}</code>
+                        <button onClick={() => copyAddress(selectedToken.hubChainAddress)} className="p-1 hover:text-white text-oz-text">
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Min Amount</label>
-                    <input
-                      type="text"
-                      defaultValue={selectedToken.minAmount}
-                      className="w-full px-4 py-2.5 rounded-xl bg-oz-darker border border-oz-border focus:border-oz-blue transition-colors text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Max Amount</label>
-                    <input
-                      type="text"
-                      defaultValue={selectedToken.maxAmount}
-                      className="w-full px-4 py-2.5 rounded-xl bg-oz-darker border border-oz-border focus:border-oz-blue transition-colors text-sm"
-                    />
+                <div className="p-4 rounded-xl bg-oz-darker border border-oz-border">
+                  <h4 className="text-sm font-medium mb-3">Quick Actions</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => { openRebalanceModal(selectedToken); setSelectedToken(null); }}
+                      className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-oz-border hover:border-oz-blue/50 hover:bg-oz-blue/10 transition-colors text-sm"
+                    >
+                      <ArrowRightLeft className="w-4 h-4" />
+                      Rebalance
+                    </button>
+                    <button
+                      onClick={() => { setWithdrawData({ ...withdrawData, token: selectedToken.symbol }); setShowWithdraw(true); setSelectedToken(null); }}
+                      className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-oz-border hover:border-oz-blue/50 hover:bg-oz-blue/10 transition-colors text-sm"
+                    >
+                      <Wallet className="w-4 h-4" />
+                      Withdraw
+                    </button>
                   </div>
                 </div>
               </div>
@@ -615,13 +598,292 @@ export default function SolverDashboard() {
                   onClick={() => setSelectedToken(null)}
                   className="flex-1 px-4 py-2.5 rounded-xl border border-oz-border hover:border-oz-blue/50 transition-colors"
                 >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Rebalance Modal */}
+        {showRebalance && rebalanceToken && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+            <div className="w-full max-w-lg rounded-2xl bg-oz-card border border-oz-border p-6 animate-fade-in">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-oz-blue/20 flex items-center justify-center font-semibold">
+                    {rebalanceToken.symbol.slice(0, 2)}
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold">Rebalance {rebalanceToken.symbol}</h3>
+                    <p className="text-sm text-oz-text">Move liquidity between chains</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => { setShowRebalance(false); setRebalanceToken(null); }}
+                  className="p-2 rounded-lg hover:bg-oz-border/50 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-5">
+                {/* Current Balances */}
+                <div className="p-4 rounded-xl bg-oz-darker border border-oz-border">
+                  <h4 className="text-sm font-medium mb-3 text-oz-text">Current Balances</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-xs text-oz-text mb-1">L2 Chain</div>
+                      <div className="font-mono text-lg">{formatNumber(rebalanceToken.newChainBalance)}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-oz-text mb-1">HUB Chain</div>
+                      <div className="font-mono text-lg">{formatNumber(rebalanceToken.hubChainBalance)}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Direction Selection */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">Direction</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => setRebalanceData({ ...rebalanceData, direction: 'l2ToHub' })}
+                      className={`p-4 rounded-xl border text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                        rebalanceData.direction === 'l2ToHub'
+                          ? 'bg-oz-blue/10 border-oz-blue text-oz-blue'
+                          : 'border-oz-border hover:border-oz-blue/50'
+                      }`}
+                    >
+                      L2 <ArrowRight className="w-4 h-4" /> HUB
+                    </button>
+                    <button
+                      onClick={() => setRebalanceData({ ...rebalanceData, direction: 'hubToL2' })}
+                      className={`p-4 rounded-xl border text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                        rebalanceData.direction === 'hubToL2'
+                          ? 'bg-oz-blue/10 border-oz-blue text-oz-blue'
+                          : 'border-oz-border hover:border-oz-blue/50'
+                      }`}
+                    >
+                      HUB <ArrowRight className="w-4 h-4" /> L2
+                    </button>
+                  </div>
+                </div>
+
+                {/* Amount Input */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">Amount</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={rebalanceData.amount}
+                      onChange={(e) => setRebalanceData({ ...rebalanceData, amount: e.target.value })}
+                      placeholder="0.00"
+                      className="w-full px-4 py-3 rounded-xl bg-oz-darker border border-oz-border focus:border-oz-blue transition-colors font-mono"
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                      <span className="text-oz-text text-sm">{rebalanceToken.symbol}</span>
+                      <button 
+                        onClick={() => {
+                          const maxAmount = rebalanceData.direction === 'l2ToHub' 
+                            ? rebalanceToken.newChainBalance 
+                            : rebalanceToken.hubChainBalance
+                          setRebalanceData({ ...rebalanceData, amount: maxAmount.toString() })
+                        }}
+                        className="px-2 py-0.5 rounded bg-oz-blue/10 text-oz-blue text-xs font-medium hover:bg-oz-blue/20"
+                      >
+                        MAX
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-xs text-oz-text mt-2">
+                    Available: {formatNumber(rebalanceData.direction === 'l2ToHub' ? rebalanceToken.newChainBalance : rebalanceToken.hubChainBalance)} {rebalanceToken.symbol}
+                  </p>
+                </div>
+
+                {/* Preview */}
+                {rebalanceData.amount && parseFloat(rebalanceData.amount) > 0 && (
+                  <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+                    <h4 className="text-sm font-medium mb-3 text-emerald-400 flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Balances After Rebalance
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <div className="text-xs text-oz-text mb-1">L2 Chain</div>
+                        <div className="font-mono text-lg">
+                          {formatNumber(getPreviewBalances().l2)}
+                          <span className={`text-sm ml-2 ${rebalanceData.direction === 'l2ToHub' ? 'text-red-400' : 'text-emerald-400'}`}>
+                            {rebalanceData.direction === 'l2ToHub' ? '−' : '+'}{rebalanceData.amount}
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-oz-text mb-1">HUB Chain</div>
+                        <div className="font-mono text-lg">
+                          {formatNumber(getPreviewBalances().hub)}
+                          <span className={`text-sm ml-2 ${rebalanceData.direction === 'hubToL2' ? 'text-red-400' : 'text-emerald-400'}`}>
+                            {rebalanceData.direction === 'hubToL2' ? '−' : '+'}{rebalanceData.amount}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-3 mt-6">
+                <button
+                  onClick={() => { setShowRebalance(false); setRebalanceToken(null); }}
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-oz-border hover:border-oz-blue/50 transition-colors"
+                >
                   Cancel
                 </button>
                 <button
-                  onClick={() => setSelectedToken(null)}
-                  className="flex-1 px-4 py-2.5 rounded-xl bg-oz-blue hover:bg-oz-blue/90 text-white font-medium transition-colors"
+                  onClick={executeRebalance}
+                  disabled={!rebalanceData.amount || parseFloat(rebalanceData.amount) <= 0 || isRebalancing}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-oz-blue hover:bg-oz-blue/90 disabled:bg-oz-blue/30 disabled:cursor-not-allowed text-white font-medium transition-colors flex items-center justify-center gap-2"
                 >
-                  Save Changes
+                  {isRebalancing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Rebalancing...
+                    </>
+                  ) : (
+                    <>
+                      <ArrowRightLeft className="w-4 h-4" />
+                      Confirm Rebalance
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Withdraw Modal */}
+        {showWithdraw && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+            <div className="w-full max-w-lg rounded-2xl bg-oz-card border border-oz-border p-6 animate-fade-in">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold">Withdraw Funds</h3>
+                <button
+                  onClick={() => setShowWithdraw(false)}
+                  className="p-2 rounded-lg hover:bg-oz-border/50 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {/* Token Selection */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">Token</label>
+                  <select
+                    value={withdrawData.token}
+                    onChange={(e) => setWithdrawData({ ...withdrawData, token: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl bg-oz-darker border border-oz-border focus:border-oz-blue transition-colors text-sm"
+                  >
+                    <option value="">Select token</option>
+                    {tokens.map(t => (
+                      <option key={t.id} value={t.symbol}>{t.symbol} - {t.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Chain Selection */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">From Chain</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => setWithdrawData({ ...withdrawData, chain: 'l2' })}
+                      className={`p-3 rounded-xl border text-sm font-medium transition-all ${
+                        withdrawData.chain === 'l2'
+                          ? 'bg-oz-blue/10 border-oz-blue text-oz-blue'
+                          : 'border-oz-border hover:border-oz-blue/50'
+                      }`}
+                    >
+                      L2 Chain
+                    </button>
+                    <button
+                      onClick={() => setWithdrawData({ ...withdrawData, chain: 'hub' })}
+                      className={`p-3 rounded-xl border text-sm font-medium transition-all ${
+                        withdrawData.chain === 'hub'
+                          ? 'bg-oz-blue/10 border-oz-blue text-oz-blue'
+                          : 'border-oz-border hover:border-oz-blue/50'
+                      }`}
+                    >
+                      HUB Chain
+                    </button>
+                  </div>
+                </div>
+
+                {/* Available Balance */}
+                {withdrawData.token && (
+                  <div className="p-3 rounded-xl bg-oz-darker border border-oz-border">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-oz-text">Available Balance</span>
+                      <span className="font-mono font-medium">
+                        {withdrawData.chain === 'l2' 
+                          ? formatNumber(tokens.find(t => t.symbol === withdrawData.token)?.newChainBalance || 0)
+                          : formatNumber(tokens.find(t => t.symbol === withdrawData.token)?.hubChainBalance || 0)
+                        } {withdrawData.token}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Amount */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">Amount</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={withdrawData.amount}
+                      onChange={(e) => setWithdrawData({ ...withdrawData, amount: e.target.value })}
+                      placeholder="0.00"
+                      className="w-full px-4 py-2.5 rounded-xl bg-oz-darker border border-oz-border focus:border-oz-blue transition-colors text-sm font-mono"
+                    />
+                    <button 
+                      onClick={() => {
+                        const balance = withdrawData.chain === 'l2' 
+                          ? tokens.find(t => t.symbol === withdrawData.token)?.newChainBalance 
+                          : tokens.find(t => t.symbol === withdrawData.token)?.hubChainBalance
+                        setWithdrawData({ ...withdrawData, amount: balance?.toString() || '' })
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded bg-oz-blue/10 text-oz-blue text-xs font-medium hover:bg-oz-blue/20"
+                    >
+                      MAX
+                    </button>
+                  </div>
+                </div>
+
+                {/* Recipient */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">Recipient Address</label>
+                  <input
+                    type="text"
+                    value={withdrawData.recipient}
+                    onChange={(e) => setWithdrawData({ ...withdrawData, recipient: e.target.value })}
+                    placeholder="0x..."
+                    className="w-full px-4 py-2.5 rounded-xl bg-oz-darker border border-oz-border focus:border-oz-blue transition-colors text-sm font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 mt-6">
+                <button
+                  onClick={() => setShowWithdraw(false)}
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-oz-border hover:border-oz-blue/50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => setShowWithdraw(false)}
+                  disabled={!withdrawData.token || !withdrawData.amount || !withdrawData.recipient}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-oz-blue hover:bg-oz-blue/90 disabled:bg-oz-blue/30 disabled:cursor-not-allowed text-white font-medium transition-colors"
+                >
+                  Withdraw
                 </button>
               </div>
             </div>
@@ -631,4 +893,3 @@ export default function SolverDashboard() {
     </div>
   )
 }
-

@@ -3,17 +3,12 @@ import {
   ArrowRightLeft, 
   ChevronDown,
   ArrowDown,
-  Wallet,
   Clock,
   Zap,
   Shield,
-  AlertCircle,
   CheckCircle2,
   Loader2,
-  ExternalLink,
-  RefreshCw,
-  Info,
-  ArrowRight
+  RefreshCw
 } from 'lucide-react'
 
 const chains = [
@@ -30,36 +25,6 @@ const tokens = [
   { id: 'eth', name: 'Ethereum', symbol: 'ETH', balance: '4.25' },
   { id: 'usdt', name: 'Tether', symbol: 'USDT', balance: '8,320.50' },
   { id: 'wbtc', name: 'Wrapped Bitcoin', symbol: 'WBTC', balance: '0.125' },
-]
-
-const recentBridges = [
-  {
-    id: '0x1234...5678',
-    fromChain: 'Base',
-    toChain: 'My L2',
-    token: 'USDC',
-    amount: '5,000.00',
-    status: 'completed',
-    time: '2 min ago',
-  },
-  {
-    id: '0xabcd...ef01',
-    fromChain: 'My L2',
-    toChain: 'Arbitrum',
-    token: 'ETH',
-    amount: '1.5',
-    status: 'pending',
-    time: '5 min ago',
-  },
-  {
-    id: '0x9876...5432',
-    fromChain: 'Ethereum',
-    toChain: 'My L2',
-    token: 'USDC',
-    amount: '25,000.00',
-    status: 'completed',
-    time: '1 hour ago',
-  },
 ]
 
 export default function UserBridge() {
@@ -179,7 +144,7 @@ export default function UserBridge() {
         </div>
 
         {/* Bridge Card */}
-        <div className="rounded-2xl bg-oz-card border border-oz-border p-6 mb-6">
+        <div className="rounded-2xl bg-oz-card border border-oz-border p-6 mb-8">
           {/* From Section */}
           <div className="mb-2">
             <div className="flex items-center justify-between mb-3">
@@ -371,74 +336,8 @@ export default function UserBridge() {
           </div>
         </div>
 
-        {/* Info Box */}
-        <div className="flex items-start gap-3 p-4 rounded-xl bg-oz-blue/5 border border-oz-blue/10 mb-6">
-          <Info className="w-5 h-5 text-oz-blue flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-oz-text">
-            <p className="font-medium text-oz-blue mb-1">How it works</p>
-            <p>
-              OIF solvers front-run the canonical bridge to provide instant liquidity. 
-              Your funds are secured by Broadcaster oracles for trustless settlement.
-            </p>
-          </div>
-        </div>
-
-        {/* Recent Bridges */}
-        <div className="rounded-2xl bg-oz-card border border-oz-border overflow-hidden">
-          <div className="px-6 py-4 border-b border-oz-border">
-            <h3 className="font-semibold">Recent Bridges</h3>
-          </div>
-          
-          <div className="divide-y divide-oz-border/50">
-            {recentBridges.map((bridge) => (
-              <div key={bridge.id} className="px-6 py-4 hover:bg-oz-darker/50 transition-colors">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-oz-blue/10 flex items-center justify-center">
-                      <ArrowRightLeft className="w-4 h-4 text-oz-blue" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="font-medium">{bridge.amount} {bridge.token}</span>
-                        <ArrowRight className="w-3 h-3 text-oz-text" />
-                        <span className="text-oz-text">{bridge.fromChain} → {bridge.toChain}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-oz-text">
-                        <code className="font-mono">{bridge.id}</code>
-                        <span>•</span>
-                        <span>{bridge.time}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    {bridge.status === 'completed' && (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-medium">
-                        <CheckCircle2 className="w-3 h-3" />
-                        Done
-                      </span>
-                    )}
-                    {bridge.status === 'pending' && (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-medium">
-                        <Clock className="w-3 h-3" />
-                        Pending
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          <div className="px-6 py-3 border-t border-oz-border">
-            <button className="flex items-center gap-1.5 text-sm text-oz-text hover:text-white transition-colors">
-              View All Transactions
-              <ExternalLink className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-
         {/* Trust Indicators */}
-        <div className="mt-8 flex items-center justify-center gap-6 text-xs text-oz-text">
+        <div className="flex items-center justify-center gap-6 text-xs text-oz-text">
           <div className="flex items-center gap-1.5">
             <Shield className="w-4 h-4 text-oz-blue" />
             <span>Secured by Broadcaster</span>
@@ -452,4 +351,3 @@ export default function UserBridge() {
     </div>
   )
 }
-
