@@ -366,16 +366,16 @@ export default function NewNetworkOnboarding() {
   }
 
   return (
-    <div className="min-h-screen pt-24 pb-16">
+    <div className="min-h-screen pt-24 pb-16" style={{ background: 'var(--oz-bg)' }}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-oz-border bg-oz-card/50 mb-6">
-            <Layers className="w-4 h-4 text-oz-blue" />
-            <span className="text-sm text-oz-text">Network Onboarding</span>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full oz-card mb-6">
+            <Layers className="w-4 h-4" style={{ color: 'var(--oz-blue)' }} />
+            <span className="text-sm" style={{ color: 'var(--oz-text-muted)' }}>Network Onboarding</span>
           </div>
-          <h1 className="text-4xl font-bold mb-4">Onboard Your L2</h1>
-          <p className="text-oz-text max-w-xl mx-auto">
+          <h1 className="text-4xl font-bold mb-4" style={{ color: 'var(--oz-text)' }}>Onboard Your L2</h1>
+          <p style={{ color: 'var(--oz-text-muted)' }} className="max-w-xl mx-auto">
             Deploy OIF infrastructure and connect your chain to the intent-based bridging ecosystem.
           </p>
         </div>
@@ -384,10 +384,10 @@ export default function NewNetworkOnboarding() {
         <div className="mb-12 overflow-x-auto pb-4">
           <div className="flex items-center justify-between relative min-w-[600px]">
             {/* Progress Line */}
-            <div className="absolute top-6 left-0 right-0 h-0.5 bg-oz-border" />
+            <div className="absolute top-6 left-0 right-0 h-0.5" style={{ background: 'var(--oz-border)' }} />
             <div 
-              className="absolute top-6 left-0 h-0.5 bg-oz-blue transition-all duration-500"
-              style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
+              className="absolute top-6 left-0 h-0.5 transition-all duration-500"
+              style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%`, background: 'var(--oz-blue)' }}
             />
             
             {steps.map((step) => (
@@ -395,13 +395,20 @@ export default function NewNetworkOnboarding() {
                 <button
                   onClick={() => !launchComplete && setCurrentStep(step.id)}
                   disabled={launchComplete}
-                  className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all duration-300 z-10 ${
-                    step.id < currentStep || launchComplete
-                      ? 'bg-oz-blue border-oz-blue text-white'
-                      : step.id === currentStep
-                      ? 'bg-oz-card border-oz-blue text-oz-blue'
-                      : 'bg-oz-card border-oz-border text-oz-text'
-                  }`}
+                  className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all duration-300 z-10`}
+                  style={{
+                    background: step.id < currentStep || launchComplete 
+                      ? 'var(--oz-blue)' 
+                      : 'var(--oz-card)',
+                    borderColor: step.id <= currentStep || launchComplete 
+                      ? 'var(--oz-blue)' 
+                      : 'var(--oz-border)',
+                    color: step.id < currentStep || launchComplete 
+                      ? 'white' 
+                      : step.id === currentStep 
+                        ? 'var(--oz-blue)' 
+                        : 'var(--oz-text-muted)'
+                  }}
                 >
                   {step.id < currentStep || launchComplete ? (
                     <Check className="w-5 h-5" />
@@ -409,9 +416,10 @@ export default function NewNetworkOnboarding() {
                     <step.icon className="w-5 h-5" />
                   )}
                 </button>
-                <span className={`mt-3 text-xs font-medium text-center whitespace-nowrap ${
-                  step.id <= currentStep ? 'text-white' : 'text-oz-text'
-                }`}>
+                <span 
+                  className="mt-3 text-xs font-medium text-center whitespace-nowrap"
+                  style={{ color: step.id <= currentStep ? 'var(--oz-text)' : 'var(--oz-text-muted)' }}
+                >
                   {step.title}
                 </span>
               </div>
@@ -420,66 +428,66 @@ export default function NewNetworkOnboarding() {
         </div>
 
         {/* Step Content */}
-        <div className="rounded-2xl bg-oz-card border border-oz-border p-8">
+        <div className="oz-card p-8">
           {/* Step 1: Network Configuration */}
           {currentStep === 1 && (
             <div className="animate-fade-in">
-              <h2 className="text-2xl font-semibold mb-2">Network Configuration</h2>
-              <p className="text-oz-text mb-8">Provide details about your L2 chain and select a HUB for connectivity.</p>
+              <h2 className="text-2xl font-semibold mb-2" style={{ color: 'var(--oz-text)' }}>Network Configuration</h2>
+              <p style={{ color: 'var(--oz-text-muted)' }} className="mb-8">Provide details about your L2 chain and select a HUB for connectivity.</p>
 
               <div className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium mb-2">Chain Name</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--oz-text)' }}>Chain Name</label>
                     <input
                       type="text"
                       name="chainName"
                       value={formData.chainName}
                       onChange={handleInputChange}
                       placeholder="e.g., My L2 Network"
-                      className="w-full px-4 py-3 rounded-xl bg-oz-darker border border-oz-border focus:border-oz-blue transition-colors"
+                      className="oz-input"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">Chain ID</label>
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--oz-text)' }}>Chain ID</label>
                     <input
                       type="text"
                       name="chainId"
                       value={formData.chainId}
                       onChange={handleInputChange}
                       placeholder="e.g., 42161"
-                      className="w-full px-4 py-3 rounded-xl bg-oz-darker border border-oz-border focus:border-oz-blue transition-colors"
+                      className="oz-input"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">RPC URL</label>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--oz-text)' }}>RPC URL</label>
                   <input
                     type="text"
                     name="rpcUrl"
                     value={formData.rpcUrl}
                     onChange={handleInputChange}
                     placeholder="https://rpc.your-network.io"
-                    className="w-full px-4 py-3 rounded-xl bg-oz-darker border border-oz-border focus:border-oz-blue transition-colors font-mono text-sm"
+                    className="oz-input font-mono text-sm"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Block Explorer URL</label>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--oz-text)' }}>Block Explorer URL</label>
                   <input
                     type="text"
                     name="explorerUrl"
                     value={formData.explorerUrl}
                     onChange={handleInputChange}
                     placeholder="https://explorer.your-network.io"
-                    className="w-full px-4 py-3 rounded-xl bg-oz-darker border border-oz-border focus:border-oz-blue transition-colors font-mono text-sm"
+                    className="oz-input font-mono text-sm"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-3">Parent Network (L1)</label>
-                  <p className="text-sm text-oz-text mb-4">
+                  <label className="block text-sm font-medium mb-3" style={{ color: 'var(--oz-text)' }}>Parent Network (L1)</label>
+                  <p className="text-sm mb-4" style={{ color: 'var(--oz-text-muted)' }}>
                     Select the parent chain that your L2 settles to. This is used for canonical bridge integration.
                   </p>
                   <div className="grid md:grid-cols-2 gap-3">
@@ -487,18 +495,18 @@ export default function NewNetworkOnboarding() {
                       <button
                         key={chain.id}
                         onClick={() => setFormData({ ...formData, parentChain: chain.id })}
-                        className={`flex items-center gap-4 p-4 rounded-xl border transition-all text-left ${
-                          formData.parentChain === chain.id
-                            ? 'bg-emerald-500/10 border-emerald-500'
-                            : 'bg-oz-darker border-oz-border hover:border-emerald-500/50'
-                        }`}
+                        className="flex items-center gap-4 p-4 rounded-xl border transition-all text-left"
+                        style={{
+                          background: formData.parentChain === chain.id ? 'rgba(16, 185, 129, 0.1)' : 'var(--oz-surface)',
+                          borderColor: formData.parentChain === chain.id ? 'var(--oz-success)' : 'var(--oz-border)'
+                        }}
                       >
                         <div className="flex-shrink-0">
                           {renderChainIcon(chain.id)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate">{chain.name}</div>
-                          <div className="text-xs text-oz-text">{chain.type}</div>
+                          <div className="font-medium truncate" style={{ color: 'var(--oz-text)' }}>{chain.name}</div>
+                          <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>{chain.type}</div>
                         </div>
                         {formData.parentChain === chain.id && (
                           <Check className="w-5 h-5 text-emerald-500 flex-shrink-0" />
@@ -509,8 +517,8 @@ export default function NewNetworkOnboarding() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-3">Select HUB Chain</label>
-                  <p className="text-sm text-oz-text mb-4">
+                  <label className="block text-sm font-medium mb-3" style={{ color: 'var(--oz-text)' }}>Select HUB Chain</label>
+                  <p className="text-sm mb-4" style={{ color: 'var(--oz-text-muted)' }}>
                     Choose a HUB chain based on settlement speed and liquidity availability.
                   </p>
                   <div className="grid md:grid-cols-2 gap-3">
@@ -518,21 +526,21 @@ export default function NewNetworkOnboarding() {
                       <button
                         key={chain.id}
                         onClick={() => setFormData({ ...formData, hubChain: chain.id })}
-                        className={`flex items-center gap-4 p-4 rounded-xl border transition-all text-left ${
-                          formData.hubChain === chain.id
-                            ? 'bg-oz-blue/10 border-oz-blue'
-                            : 'bg-oz-darker border-oz-border hover:border-oz-blue/50'
-                        }`}
+                        className="flex items-center gap-4 p-4 rounded-xl border transition-all text-left"
+                        style={{
+                          background: formData.hubChain === chain.id ? 'var(--oz-blue-light)' : 'var(--oz-surface)',
+                          borderColor: formData.hubChain === chain.id ? 'var(--oz-blue)' : 'var(--oz-border)'
+                        }}
                       >
                         <div className="flex-shrink-0">
                           {renderChainIcon(chain.id)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate">{chain.name}</div>
-                          <div className="text-xs text-oz-text">Settlement: {chain.settlementTime}</div>
+                          <div className="font-medium truncate" style={{ color: 'var(--oz-text)' }}>{chain.name}</div>
+                          <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>Settlement: {chain.settlementTime}</div>
                         </div>
                         {formData.hubChain === chain.id && (
-                          <Check className="w-5 h-5 text-oz-blue flex-shrink-0" />
+                          <Check className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--oz-blue)' }} />
                         )}
                       </button>
                     ))}
@@ -545,24 +553,24 @@ export default function NewNetworkOnboarding() {
           {/* Step 2: Solver Setup */}
           {currentStep === 2 && (
             <div className="animate-fade-in">
-              <h2 className="text-2xl font-semibold mb-2">Solver Configuration</h2>
-              <p className="text-oz-text mb-8">Configure the solver instance that will operate your bridge routes.</p>
+              <h2 className="text-2xl font-semibold mb-2" style={{ color: 'var(--oz-text)' }}>Solver Configuration</h2>
+              <p style={{ color: 'var(--oz-text-muted)' }} className="mb-8">Configure the solver instance that will operate your bridge routes.</p>
 
               <div className="space-y-6">
                 {/* AWS KMS Generation */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">Solver Execution Address</label>
-                  <p className="text-xs text-oz-text mb-3">
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--oz-text)' }}>Solver Execution Address</label>
+                  <p className="text-xs mb-3" style={{ color: 'var(--oz-text-muted)' }}>
                     A secure AWS KMS signer is being generated for your solver instance.
                   </p>
                   
-                  <div className="p-4 rounded-xl bg-oz-darker border border-oz-border">
+                  <div className="p-4 rounded-xl" style={{ background: 'var(--oz-surface)', border: '1px solid var(--oz-border)' }}>
                     {generatingKMS ? (
                       <div className="flex items-center gap-3">
-                        <Loader2 className="w-5 h-5 text-oz-blue animate-spin" />
+                        <Loader2 className="w-5 h-5 animate-spin" style={{ color: 'var(--oz-blue)' }} />
                         <div>
-                          <div className="font-medium text-oz-blue">Generating AWS KMS Signer...</div>
-                          <div className="text-xs text-oz-text mt-1">
+                          <div className="font-medium" style={{ color: 'var(--oz-blue)' }}>Generating AWS KMS Signer...</div>
+                          <div className="text-xs mt-1" style={{ color: 'var(--oz-text-muted)' }}>
                             Creating secure key pair for transaction signing
                           </div>
                         </div>
@@ -570,31 +578,32 @@ export default function NewNetworkOnboarding() {
                     ) : kmsAddress ? (
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                           <div>
-                            <div className="text-xs text-oz-text mb-1">Generated Address</div>
-                            <code className="font-mono text-sm">{kmsAddress}</code>
+                            <div className="text-xs mb-1" style={{ color: 'var(--oz-text-muted)' }}>Generated Address</div>
+                            <code className="font-mono text-sm" style={{ color: 'var(--oz-text)' }}>{kmsAddress}</code>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => copyAddress(kmsAddress)}
-                            className="p-2 rounded-lg hover:bg-oz-border/50 transition-colors"
+                            className="p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
                           >
-                            <Copy className="w-4 h-4 text-oz-text" />
+                            <Copy className="w-4 h-4" style={{ color: 'var(--oz-text-muted)' }} />
                           </button>
                           <button
                             onClick={() => { setKmsAddress(null); generateKMS(); }}
-                            className="p-2 rounded-lg hover:bg-oz-border/50 transition-colors"
+                            className="p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
                           >
-                            <RefreshCw className="w-4 h-4 text-oz-text" />
+                            <RefreshCw className="w-4 h-4" style={{ color: 'var(--oz-text-muted)' }} />
                           </button>
                         </div>
                       </div>
                     ) : (
                       <button
                         onClick={generateKMS}
-                        className="flex items-center gap-2 text-oz-blue hover:underline"
+                        className="flex items-center gap-2 hover:underline"
+                        style={{ color: 'var(--oz-blue)' }}
                       >
                         <Plus className="w-4 h-4" />
                         Generate KMS Signer
@@ -606,16 +615,17 @@ export default function NewNetworkOnboarding() {
                 {/* Multiple Notification Emails */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium">Notification Emails</label>
+                    <label className="block text-sm font-medium" style={{ color: 'var(--oz-text)' }}>Notification Emails</label>
                     <button
                       onClick={addEmail}
-                      className="flex items-center gap-1.5 text-xs text-oz-blue hover:underline"
+                      className="flex items-center gap-1.5 text-xs hover:underline"
+                      style={{ color: 'var(--oz-blue)' }}
                     >
                       <Plus className="w-3.5 h-3.5" />
                       Add Email
                     </button>
                   </div>
-                  <p className="text-xs text-oz-text mb-3">
+                  <p className="text-xs mb-3" style={{ color: 'var(--oz-text-muted)' }}>
                     Receive alerts about solver health, low liquidity, and important events.
                   </p>
                   
@@ -627,14 +637,15 @@ export default function NewNetworkOnboarding() {
                           value={email}
                           onChange={(e) => updateEmail(index, e.target.value)}
                           placeholder="admin@yourchain.io"
-                          className="flex-1 px-4 py-3 rounded-xl bg-oz-darker border border-oz-border focus:border-oz-blue transition-colors"
+                          className="oz-input flex-1"
                         />
                         {notificationEmails.length > 1 && (
                           <button
                             onClick={() => removeEmail(index)}
-                            className="p-3 rounded-xl border border-oz-border hover:border-red-500/50 hover:bg-red-500/10 transition-colors"
+                            className="p-3 rounded-xl border hover:border-red-500/50 hover:bg-red-500/10 transition-colors"
+                            style={{ borderColor: 'var(--oz-border)' }}
                           >
-                            <X className="w-4 h-4 text-oz-text hover:text-red-400" />
+                            <X className="w-4 h-4" style={{ color: 'var(--oz-text-muted)' }} />
                           </button>
                         )}
                       </div>
@@ -645,10 +656,10 @@ export default function NewNetworkOnboarding() {
                 {/* Backup Admin Address */}
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <label className="block text-sm font-medium">Backup Admin Address</label>
-                    <span className="text-xs text-oz-text px-2 py-0.5 rounded-full bg-oz-border/50">Optional</span>
+                    <label className="block text-sm font-medium" style={{ color: 'var(--oz-text)' }}>Backup Admin Address</label>
+                    <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'var(--oz-border)', color: 'var(--oz-text-muted)' }}>Optional</span>
                   </div>
-                  <p className="text-xs text-oz-text mb-3">
+                  <p className="text-xs mb-3" style={{ color: 'var(--oz-text-muted)' }}>
                     This address will be approved to spend funds on behalf of the solver as a backup recovery mechanism.
                   </p>
                   <input
@@ -657,39 +668,39 @@ export default function NewNetworkOnboarding() {
                     value={formData.backupAdminAddress}
                     onChange={handleInputChange}
                     placeholder="0x... (Recommended: multisig address)"
-                    className="w-full px-4 py-3 rounded-xl bg-oz-darker border border-oz-border focus:border-oz-blue transition-colors font-mono text-sm"
+                    className="oz-input font-mono text-sm"
                   />
-                  <div className="flex items-start gap-2 mt-3 p-3 rounded-lg bg-red-500/5 border border-red-500/20">
-                    <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-                    <div className="text-xs text-oz-text">
-                      <span className="text-red-400 font-medium">Important:</span> Use a multisig wallet (e.g., Safe) controlled by trusted parties. 
+                  <div className="flex items-start gap-2 mt-3 p-3 rounded-lg" style={{ background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                    <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                    <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>
+                      <span className="text-red-500 font-medium">Important:</span> Use a multisig wallet (e.g., Safe) controlled by trusted parties. 
                       This address will have the ability to recover funds in case of emergency.
                     </div>
                   </div>
                 </div>
 
                 {/* Solver Instance Preview */}
-                <div className="p-6 rounded-xl bg-oz-darker border border-oz-border">
-                  <h3 className="font-medium mb-4">Solver Instance Preview</h3>
+                <div className="p-6 rounded-xl" style={{ background: 'var(--oz-surface)', border: '1px solid var(--oz-border)' }}>
+                  <h3 className="font-medium mb-4" style={{ color: 'var(--oz-text)' }}>Solver Instance Preview</h3>
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-oz-text">Instance ID</span>
-                      <code className="font-mono text-oz-accent">solver-{formData.chainId || 'xxxxx'}</code>
+                      <span style={{ color: 'var(--oz-text-muted)' }}>Instance ID</span>
+                      <code className="font-mono" style={{ color: 'var(--oz-blue)' }}>solver-{formData.chainId || 'xxxxx'}</code>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-oz-text">Execution Address</span>
+                      <span style={{ color: 'var(--oz-text-muted)' }}>Execution Address</span>
                       {kmsAddress ? (
-                        <code className="font-mono text-emerald-400">{kmsAddress.slice(0, 10)}...{kmsAddress.slice(-6)}</code>
+                        <code className="font-mono text-emerald-500">{kmsAddress.slice(0, 10)}...{kmsAddress.slice(-6)}</code>
                       ) : (
-                        <span className="text-oz-text flex items-center gap-2">
+                        <span className="flex items-center gap-2" style={{ color: 'var(--oz-text-muted)' }}>
                           <Loader2 className="w-3 h-3 animate-spin" />
                           Generating...
                         </span>
                       )}
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-oz-text">HUB Connection</span>
-                      <span className="flex items-center gap-2 text-emerald-400">
+                      <span style={{ color: 'var(--oz-text-muted)' }}>HUB Connection</span>
+                      <span className="flex items-center gap-2 text-emerald-500">
                         {formData.hubChain && (
                           <span className="w-5 h-5">{renderChainIcon(formData.hubChain)}</span>
                         )}
@@ -697,11 +708,11 @@ export default function NewNetworkOnboarding() {
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-oz-text">Notification Recipients</span>
-                      <span>{notificationEmails.filter(e => e).length} email(s)</span>
+                      <span style={{ color: 'var(--oz-text-muted)' }}>Notification Recipients</span>
+                      <span style={{ color: 'var(--oz-text)' }}>{notificationEmails.filter(e => e).length} email(s)</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-oz-text">Status</span>
+                      <span style={{ color: 'var(--oz-text-muted)' }}>Status</span>
                       <span className="flex items-center gap-2">
                         <span className="status-dot status-pending" />
                         Awaiting configuration
@@ -711,11 +722,11 @@ export default function NewNetworkOnboarding() {
                 </div>
 
                 {/* Warning */}
-                <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                  <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-3 p-4 rounded-xl" style={{ background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+                  <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
                   <div className="text-sm">
-                    <p className="font-medium text-amber-400 mb-1">Important</p>
-                    <p className="text-oz-text">
+                    <p className="font-medium text-amber-500 mb-1">Important</p>
+                    <p style={{ color: 'var(--oz-text-muted)' }}>
                       The generated AWS KMS signer is unique to this solver instance. You'll need to 
                       deposit initial funds to this address before the solver can be activated.
                     </p>
@@ -725,18 +736,18 @@ export default function NewNetworkOnboarding() {
             </div>
           )}
 
-          {/* Step 4: Token Pairs Configuration */}
+          {/* Step 3: Token Pairs Configuration */}
           {currentStep === 3 && (
             <div className="animate-fade-in">
-              <h2 className="text-2xl font-semibold mb-2">Token Pairs Configuration</h2>
-              <p className="text-oz-text mb-8">Configure the token pairs that your solver will support for bridging.</p>
+              <h2 className="text-2xl font-semibold mb-2" style={{ color: 'var(--oz-text)' }}>Token Pairs Configuration</h2>
+              <p style={{ color: 'var(--oz-text-muted)' }} className="mb-8">Configure the token pairs that your solver will support for bridging.</p>
 
               {/* Token Pairs List */}
               {tokenPairs.length > 0 && (
                 <div className="space-y-3 mb-6">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-medium">Token Pairs ({tokenPairs.length})</h3>
-                    <div className="text-xs text-oz-text">
+                    <h3 className="font-medium" style={{ color: 'var(--oz-text)' }}>Token Pairs ({tokenPairs.length})</h3>
+                    <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>
                       {tokenPairs.filter(p => p.l2Address && p.l2Symbol).length} of {tokenPairs.length} configured
                     </div>
                   </div>
@@ -748,23 +759,24 @@ export default function NewNetworkOnboarding() {
                     return (
                       <div
                         key={pair.id}
-                        className={`p-4 rounded-xl border transition-all ${
-                          isPending 
-                            ? 'bg-amber-500/5 border-amber-500/30' 
-                            : 'bg-oz-darker border-oz-border'
-                        }`}
+                        className="p-4 rounded-xl border transition-all"
+                        style={{
+                          background: isPending ? 'rgba(245, 158, 11, 0.05)' : 'var(--oz-surface)',
+                          borderColor: isPending ? 'rgba(245, 158, 11, 0.3)' : 'var(--oz-border)'
+                        }}
                       >
                         {isPending ? (
                           /* Pending Configuration - Need L2 Address */
                           <div className="space-y-4">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-oz-blue/20 flex items-center justify-center font-semibold text-sm">
+                                <div className="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm"
+                                  style={{ background: 'var(--oz-blue-light)', color: 'var(--oz-blue)' }}>
                                   {pair.hubSymbol.slice(0, 2)}
                                 </div>
                                 <div>
-                                  <div className="font-medium">{pair.hubSymbol} Token Pair</div>
-                                  <div className="text-xs text-amber-400 flex items-center gap-1">
+                                  <div className="font-medium" style={{ color: 'var(--oz-text)' }}>{pair.hubSymbol} Token Pair</div>
+                                  <div className="text-xs text-amber-500 flex items-center gap-1">
                                     <AlertCircle className="w-3 h-3" />
                                     L2 address required
                                   </div>
@@ -772,7 +784,8 @@ export default function NewNetworkOnboarding() {
                               </div>
                               <button
                                 onClick={() => removeTokenPair(pair.id)}
-                                className="p-2 rounded-lg hover:bg-red-500/10 transition-colors text-oz-text hover:text-red-400"
+                                className="p-2 rounded-lg hover:bg-red-500/10 transition-colors"
+                                style={{ color: 'var(--oz-text-muted)' }}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -781,7 +794,7 @@ export default function NewNetworkOnboarding() {
                             <div className="grid md:grid-cols-2 gap-4">
                               {/* L2 Token Input */}
                               <div>
-                                <label className="block text-xs font-medium mb-1.5 text-oz-text">
+                                <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--oz-text-muted)' }}>
                                   {pair.hubSymbol} Address on Your L2
                                 </label>
                                 <input
@@ -789,15 +802,15 @@ export default function NewNetworkOnboarding() {
                                   value={pair.l2Address}
                                   onChange={(e) => updateTokenPairL2Address(pair.id, e.target.value)}
                                   placeholder="0x... (Enter token address)"
-                                  className="w-full px-3 py-2 rounded-lg bg-oz-card border border-oz-border focus:border-oz-blue transition-colors font-mono text-xs"
+                                  className="oz-input font-mono text-xs"
                                 />
                                 {pair.l2Loading ? (
-                                  <div className="flex items-center gap-1.5 mt-2 text-xs text-oz-text">
-                                    <Loader2 className="w-3 h-3 animate-spin text-oz-blue" />
+                                  <div className="flex items-center gap-1.5 mt-2 text-xs" style={{ color: 'var(--oz-text-muted)' }}>
+                                    <Loader2 className="w-3 h-3 animate-spin" style={{ color: 'var(--oz-blue)' }} />
                                     Fetching token info...
                                   </div>
                                 ) : pair.l2Symbol ? (
-                                  <div className="flex items-center gap-1.5 mt-2 text-xs text-emerald-400">
+                                  <div className="flex items-center gap-1.5 mt-2 text-xs text-emerald-500">
                                     <CheckCircle2 className="w-3 h-3" />
                                     {pair.l2Symbol} ({pair.l2Decimals} decimals)
                                   </div>
@@ -806,13 +819,14 @@ export default function NewNetworkOnboarding() {
                               
                               {/* HUB Token Info (Read-only) */}
                               <div>
-                                <label className="block text-xs font-medium mb-1.5 text-oz-text">
+                                <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--oz-text-muted)' }}>
                                   {pair.hubSymbol} Address on HUB
                                 </label>
-                                <div className="px-3 py-2 rounded-lg bg-oz-card/50 border border-oz-border font-mono text-xs text-oz-text">
+                                <div className="px-3 py-2 rounded-lg font-mono text-xs"
+                                  style={{ background: 'var(--oz-bg)', border: '1px solid var(--oz-border)', color: 'var(--oz-text-muted)' }}>
                                   {pair.hubAddress.slice(0, 14)}...{pair.hubAddress.slice(-8)}
                                 </div>
-                                <div className="flex items-center gap-1.5 mt-2 text-xs text-emerald-400">
+                                <div className="flex items-center gap-1.5 mt-2 text-xs text-emerald-500">
                                   <CheckCircle2 className="w-3 h-3" />
                                   {pair.hubSymbol} ({pair.hubDecimals} decimals)
                                 </div>
@@ -825,32 +839,34 @@ export default function NewNetworkOnboarding() {
                             <div className="flex items-center gap-6">
                               {/* L2 Token Info */}
                               <div className="text-center">
-                                <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center font-semibold text-sm mx-auto mb-1">
+                                <div className="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm mx-auto mb-1"
+                                  style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
                                   {pair.l2Symbol.slice(0, 2)}
                                 </div>
-                                <div className="text-xs font-medium">{pair.l2Symbol}</div>
-                                <div className="text-xs text-oz-text">Your L2</div>
+                                <div className="text-xs font-medium" style={{ color: 'var(--oz-text)' }}>{pair.l2Symbol}</div>
+                                <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>Your L2</div>
                               </div>
 
                               {/* Arrow */}
-                              <div className="flex items-center gap-2 text-oz-text">
-                                <div className="w-8 h-px bg-oz-border" />
+                              <div className="flex items-center gap-2" style={{ color: 'var(--oz-text-muted)' }}>
+                                <div className="w-8 h-px" style={{ background: 'var(--oz-border)' }} />
                                 <span className="text-xs">↔</span>
-                                <div className="w-8 h-px bg-oz-border" />
+                                <div className="w-8 h-px" style={{ background: 'var(--oz-border)' }} />
                               </div>
 
                               {/* HUB Token Info */}
                               <div className="text-center">
-                                <div className="w-10 h-10 rounded-full bg-oz-blue/20 flex items-center justify-center font-semibold text-sm mx-auto mb-1">
+                                <div className="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm mx-auto mb-1"
+                                  style={{ background: 'var(--oz-blue-light)', color: 'var(--oz-blue)' }}>
                                   {pair.hubSymbol.slice(0, 2)}
                                 </div>
-                                <div className="text-xs font-medium">{pair.hubSymbol}</div>
-                                <div className="text-xs text-oz-text">HUB</div>
+                                <div className="text-xs font-medium" style={{ color: 'var(--oz-text)' }}>{pair.hubSymbol}</div>
+                                <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>HUB</div>
                               </div>
                             </div>
 
                             {/* Addresses */}
-                            <div className="hidden md:block text-xs text-oz-text font-mono">
+                            <div className="hidden md:block text-xs font-mono" style={{ color: 'var(--oz-text-muted)' }}>
                               <div>{pair.l2Address.slice(0, 10)}...{pair.l2Address.slice(-6)}</div>
                               <div>{pair.hubAddress.slice(0, 10)}...{pair.hubAddress.slice(-6)}</div>
                             </div>
@@ -858,7 +874,8 @@ export default function NewNetworkOnboarding() {
                             {/* Delete Button */}
                             <button
                               onClick={() => removeTokenPair(pair.id)}
-                              className="p-2 rounded-lg hover:bg-red-500/10 transition-colors text-oz-text hover:text-red-400"
+                              className="p-2 rounded-lg hover:bg-red-500/10 transition-colors"
+                              style={{ color: 'var(--oz-text-muted)' }}
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -871,13 +888,13 @@ export default function NewNetworkOnboarding() {
               )}
 
               {/* Add Token Pair Form */}
-              <div className="p-6 rounded-xl bg-oz-darker border border-oz-border">
-                <h3 className="font-medium mb-4">Add New Token Pair</h3>
+              <div className="p-6 rounded-xl" style={{ background: 'var(--oz-surface)', border: '1px solid var(--oz-border)' }}>
+                <h3 className="font-medium mb-4" style={{ color: 'var(--oz-text)' }}>Add New Token Pair</h3>
                 
                 <div className="grid md:grid-cols-2 gap-6 mb-6">
                   {/* L2 Token */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--oz-text)' }}>
                       Token on Your L2
                     </label>
                     <input
@@ -885,24 +902,24 @@ export default function NewNetworkOnboarding() {
                       value={newTokenPair.l2Address}
                       onChange={(e) => handleL2AddressChange(e.target.value)}
                       placeholder="0x... (Token address)"
-                      className="w-full px-4 py-3 rounded-xl bg-oz-card border border-oz-border focus:border-oz-blue transition-colors font-mono text-sm mb-3"
+                      className="oz-input font-mono text-sm mb-3"
                     />
                     
                     {newTokenPair.l2Loading ? (
-                      <div className="flex items-center gap-2 text-sm text-oz-text">
-                        <Loader2 className="w-4 h-4 animate-spin text-oz-blue" />
+                      <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--oz-text-muted)' }}>
+                        <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--oz-blue)' }} />
                         Fetching token info from RPC...
                       </div>
                     ) : newTokenPair.l2Symbol ? (
-                      <div className="p-3 rounded-lg bg-oz-card border border-emerald-500/30">
+                      <div className="p-3 rounded-lg" style={{ background: 'var(--oz-bg)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
                         <div className="flex items-center gap-2 text-sm">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                          <span className="font-medium">{newTokenPair.l2Symbol}</span>
-                          <span className="text-oz-text">({newTokenPair.l2Decimals} decimals)</span>
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                          <span className="font-medium" style={{ color: 'var(--oz-text)' }}>{newTokenPair.l2Symbol}</span>
+                          <span style={{ color: 'var(--oz-text-muted)' }}>({newTokenPair.l2Decimals} decimals)</span>
                         </div>
                       </div>
                     ) : (
-                      <div className="text-xs text-oz-text">
+                      <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>
                         Enter a valid token address to auto-fetch symbol and decimals
                       </div>
                     )}
@@ -910,7 +927,7 @@ export default function NewNetworkOnboarding() {
 
                   {/* HUB Token */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">
+                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--oz-text)' }}>
                       Token on {hubChains.find(h => h.id === formData.hubChain)?.name || 'HUB Chain'}
                     </label>
                     <input
@@ -918,24 +935,24 @@ export default function NewNetworkOnboarding() {
                       value={newTokenPair.hubAddress}
                       onChange={(e) => handleHubAddressChange(e.target.value)}
                       placeholder="0x... (Token address)"
-                      className="w-full px-4 py-3 rounded-xl bg-oz-card border border-oz-border focus:border-oz-blue transition-colors font-mono text-sm mb-3"
+                      className="oz-input font-mono text-sm mb-3"
                     />
                     
                     {newTokenPair.hubLoading ? (
-                      <div className="flex items-center gap-2 text-sm text-oz-text">
-                        <Loader2 className="w-4 h-4 animate-spin text-oz-blue" />
+                      <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--oz-text-muted)' }}>
+                        <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--oz-blue)' }} />
                         Fetching token info from RPC...
                       </div>
                     ) : newTokenPair.hubSymbol ? (
-                      <div className="p-3 rounded-lg bg-oz-card border border-emerald-500/30">
+                      <div className="p-3 rounded-lg" style={{ background: 'var(--oz-bg)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
                         <div className="flex items-center gap-2 text-sm">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                          <span className="font-medium">{newTokenPair.hubSymbol}</span>
-                          <span className="text-oz-text">({newTokenPair.hubDecimals} decimals)</span>
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                          <span className="font-medium" style={{ color: 'var(--oz-text)' }}>{newTokenPair.hubSymbol}</span>
+                          <span style={{ color: 'var(--oz-text-muted)' }}>({newTokenPair.hubDecimals} decimals)</span>
                         </div>
                       </div>
                     ) : (
-                      <div className="text-xs text-oz-text">
+                      <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>
                         Enter a valid token address to auto-fetch symbol and decimals
                       </div>
                     )}
@@ -945,7 +962,7 @@ export default function NewNetworkOnboarding() {
                 <button
                   onClick={addTokenPair}
                   disabled={!newTokenPair.l2Symbol || !newTokenPair.hubSymbol}
-                  className="w-full py-3 rounded-xl bg-oz-blue hover:bg-oz-blue/90 disabled:bg-oz-blue/30 disabled:cursor-not-allowed text-white font-medium transition-colors flex items-center justify-center gap-2"
+                  className="w-full oz-btn-primary py-3 flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   <Plus className="w-5 h-5" />
                   Add Token Pair
@@ -953,10 +970,10 @@ export default function NewNetworkOnboarding() {
               </div>
 
               {/* Info */}
-              <div className="flex items-start gap-3 p-4 rounded-xl bg-oz-blue/10 border border-oz-blue/20 mt-6">
-                <Info className="w-5 h-5 text-oz-blue flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-oz-text">
-                  <p className="font-medium text-oz-blue mb-1">Token Pair Mapping</p>
+              <div className="flex items-start gap-3 p-4 rounded-xl mt-6" style={{ background: 'var(--oz-blue-light)', border: '1px solid rgba(78, 94, 228, 0.2)' }}>
+                <Info className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: 'var(--oz-blue)' }} />
+                <div className="text-sm" style={{ color: 'var(--oz-text-muted)' }}>
+                  <p className="font-medium mb-1" style={{ color: 'var(--oz-blue)' }}>Token Pair Mapping</p>
                   <p>
                     Each pair maps a token on your L2 to its corresponding token on the HUB chain. 
                     Token info is automatically fetched from the chain RPCs.
@@ -966,51 +983,52 @@ export default function NewNetworkOnboarding() {
             </div>
           )}
 
-          {/* Step 5: Fund & Launch */}
+          {/* Step 4: Fund & Launch */}
           {currentStep === 4 && (
             <div className="animate-fade-in">
               {!launchComplete ? (
                 <>
-                  <h2 className="text-2xl font-semibold mb-2">Fund & Request Solver</h2>
-                  <p className="text-oz-text mb-8">Deposit initial liquidity and submit your solver request to the OpenZeppelin team.</p>
+                  <h2 className="text-2xl font-semibold mb-2" style={{ color: 'var(--oz-text)' }}>Fund & Request Solver</h2>
+                  <p style={{ color: 'var(--oz-text-muted)' }} className="mb-8">Deposit initial liquidity and submit your solver request to the OpenZeppelin team.</p>
 
                   {/* Deposit Address */}
-                  <div className="p-6 rounded-xl bg-oz-darker border border-oz-border mb-6">
-                    <h3 className="font-medium mb-4">Deposit Address (Solver KMS)</h3>
-                    <div className="flex items-center gap-3 p-3 rounded-lg bg-oz-card border border-oz-border">
-                      <code className="flex-1 font-mono text-sm break-all">
+                  <div className="p-6 rounded-xl mb-6" style={{ background: 'var(--oz-surface)', border: '1px solid var(--oz-border)' }}>
+                    <h3 className="font-medium mb-4" style={{ color: 'var(--oz-text)' }}>Deposit Address (Solver KMS)</h3>
+                    <div className="flex items-center gap-3 p-3 rounded-lg" style={{ background: 'var(--oz-bg)', border: '1px solid var(--oz-border)' }}>
+                      <code className="flex-1 font-mono text-sm break-all" style={{ color: 'var(--oz-text)' }}>
                         {kmsAddress || 'Generating...'}
                       </code>
                       {kmsAddress && (
                         <button 
                           onClick={() => copyAddress(kmsAddress)}
-                          className="p-2 rounded-lg hover:bg-oz-border/50 transition-colors"
+                          className="p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
                         >
-                          <Copy className="w-4 h-4 text-oz-text" />
+                          <Copy className="w-4 h-4" style={{ color: 'var(--oz-text-muted)' }} />
                         </button>
                       )}
                     </div>
-                    <p className="text-xs text-oz-text mt-3">
+                    <p className="text-xs mt-3" style={{ color: 'var(--oz-text-muted)' }}>
                       Deposit funds to this address on both your L2 chain and the HUB chain.
                     </p>
                   </div>
 
                   {/* Liquidity Requirements - Split by Network */}
                   <div className="space-y-4 mb-8">
-                    <h3 className="font-medium">Required Deposits</h3>
+                    <h3 className="font-medium" style={{ color: 'var(--oz-text)' }}>Required Deposits</h3>
                     
                     {/* Your L2 Network */}
-                    <div className="p-4 rounded-xl bg-oz-darker border border-oz-border">
-                      <div className="flex items-center gap-3 mb-4 pb-3 border-b border-oz-border">
-                        <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                          <Layers className="w-4 h-4 text-emerald-400" />
+                    <div className="p-4 rounded-xl" style={{ background: 'var(--oz-surface)', border: '1px solid var(--oz-border)' }}>
+                      <div className="flex items-center gap-3 mb-4 pb-3" style={{ borderBottom: '1px solid var(--oz-border)' }}>
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
+                          <Layers className="w-4 h-4 text-emerald-500" />
                         </div>
                         <div className="flex-1">
-                          <div className="font-medium">Your L2 Network</div>
-                          <div className="text-xs text-oz-text">{formData.chainName || 'New L2'}</div>
+                          <div className="font-medium" style={{ color: 'var(--oz-text)' }}>Your L2 Network</div>
+                          <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>{formData.chainName || 'New L2'}</div>
                         </div>
                         {depositsVerified && (
-                          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-medium">
+                          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
+                            style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
                             <CheckCircle2 className="w-3.5 h-3.5" />
                             Verified
                           </span>
@@ -1022,15 +1040,15 @@ export default function NewNetworkOnboarding() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             {verifyingDeposits ? (
-                              <Loader2 className="w-4 h-4 animate-spin text-oz-blue" />
+                              <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--oz-blue)' }} />
                             ) : depositProgress.eth === 100 ? (
-                              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                             ) : (
-                              <Circle className="w-4 h-4 text-oz-text" />
+                              <Circle className="w-4 h-4" style={{ color: 'var(--oz-text-muted)' }} />
                             )}
-                            <span className="text-sm">ETH (Gas)</span>
+                            <span className="text-sm" style={{ color: 'var(--oz-text)' }}>ETH (Gas)</span>
                           </div>
-                          <span className="text-sm font-mono">0.5 ETH</span>
+                          <span className="text-sm font-mono" style={{ color: 'var(--oz-text)' }}>0.5 ETH</span>
                         </div>
                         
                         {/* Token liquidity on L2 */}
@@ -1038,48 +1056,37 @@ export default function NewNetworkOnboarding() {
                           <div key={`l2-${pair.id}`} className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               {verifyingDeposits ? (
-                                <Loader2 className="w-4 h-4 animate-spin text-oz-blue" />
+                                <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--oz-blue)' }} />
                               ) : depositProgress.tokens === 100 ? (
-                                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                               ) : (
-                                <Circle className="w-4 h-4 text-oz-text" />
+                                <Circle className="w-4 h-4" style={{ color: 'var(--oz-text-muted)' }} />
                               )}
-                              <span className="text-sm">{pair.l2Symbol}</span>
+                              <span className="text-sm" style={{ color: 'var(--oz-text)' }}>{pair.l2Symbol}</span>
                             </div>
-                            <span className="text-sm font-mono">1,000 {pair.l2Symbol}</span>
+                            <span className="text-sm font-mono" style={{ color: 'var(--oz-text)' }}>1,000 {pair.l2Symbol}</span>
                           </div>
                         ))}
                       </div>
-                      
-                      {/* Progress bar only for multiple items */}
-                      {tokenPairs.filter(p => p.l2Symbol).length > 1 && verifyingDeposits && (
-                        <div className="mt-4 pt-3 border-t border-oz-border">
-                          <div className="w-full bg-oz-border rounded-full h-1.5">
-                            <div 
-                              className="bg-emerald-500 h-1.5 rounded-full transition-all duration-500" 
-                              style={{ width: `${(depositProgress.eth + depositProgress.tokens) / 2}%` }} 
-                            />
-                          </div>
-                        </div>
-                      )}
                     </div>
 
                     {/* HUB Network */}
-                    <div className="p-4 rounded-xl bg-oz-darker border border-oz-border">
-                      <div className="flex items-center gap-3 mb-4 pb-3 border-b border-oz-border">
+                    <div className="p-4 rounded-xl" style={{ background: 'var(--oz-surface)', border: '1px solid var(--oz-border)' }}>
+                      <div className="flex items-center gap-3 mb-4 pb-3" style={{ borderBottom: '1px solid var(--oz-border)' }}>
                         {formData.hubChain && (
                           <div className="w-8 h-8 flex items-center justify-center">
                             {renderChainIcon(formData.hubChain)}
                           </div>
                         )}
                         <div className="flex-1">
-                          <div className="font-medium">HUB Network</div>
-                          <div className="text-xs text-oz-text">
+                          <div className="font-medium" style={{ color: 'var(--oz-text)' }}>HUB Network</div>
+                          <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>
                             {hubChains.find(h => h.id === formData.hubChain)?.name || 'HUB Chain'}
                           </div>
                         </div>
                         {depositsVerified && (
-                          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-medium">
+                          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
+                            style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
                             <CheckCircle2 className="w-3.5 h-3.5" />
                             Verified
                           </span>
@@ -1091,15 +1098,15 @@ export default function NewNetworkOnboarding() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             {verifyingDeposits ? (
-                              <Loader2 className="w-4 h-4 animate-spin text-oz-blue" />
+                              <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--oz-blue)' }} />
                             ) : depositProgress.eth === 100 ? (
-                              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                             ) : (
-                              <Circle className="w-4 h-4 text-oz-text" />
+                              <Circle className="w-4 h-4" style={{ color: 'var(--oz-text-muted)' }} />
                             )}
-                            <span className="text-sm">ETH (Gas)</span>
+                            <span className="text-sm" style={{ color: 'var(--oz-text)' }}>ETH (Gas)</span>
                           </div>
-                          <span className="text-sm font-mono">0.5 ETH</span>
+                          <span className="text-sm font-mono" style={{ color: 'var(--oz-text)' }}>0.5 ETH</span>
                         </div>
                         
                         {/* Token liquidity on HUB */}
@@ -1107,39 +1114,27 @@ export default function NewNetworkOnboarding() {
                           <div key={`hub-${pair.id}`} className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               {verifyingDeposits ? (
-                                <Loader2 className="w-4 h-4 animate-spin text-oz-blue" />
+                                <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--oz-blue)' }} />
                               ) : depositProgress.tokens === 100 ? (
-                                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                               ) : (
-                                <Circle className="w-4 h-4 text-oz-text" />
+                                <Circle className="w-4 h-4" style={{ color: 'var(--oz-text-muted)' }} />
                               )}
-                              <span className="text-sm">{pair.hubSymbol}</span>
+                              <span className="text-sm" style={{ color: 'var(--oz-text)' }}>{pair.hubSymbol}</span>
                             </div>
-                            <span className="text-sm font-mono">1,000 {pair.hubSymbol}</span>
+                            <span className="text-sm font-mono" style={{ color: 'var(--oz-text)' }}>1,000 {pair.hubSymbol}</span>
                           </div>
                         ))}
                       </div>
-                      
-                      {/* Progress bar only for multiple items */}
-                      {tokenPairs.filter(p => p.l2Symbol).length > 1 && verifyingDeposits && (
-                        <div className="mt-4 pt-3 border-t border-oz-border">
-                          <div className="w-full bg-oz-border rounded-full h-1.5">
-                            <div 
-                              className="bg-oz-blue h-1.5 rounded-full transition-all duration-500" 
-                              style={{ width: `${(depositProgress.eth + depositProgress.tokens) / 2}%` }} 
-                            />
-                          </div>
-                        </div>
-                      )}
                     </div>
 
                     {/* Unconfigured tokens warning */}
                     {tokenPairs.some(p => !p.l2Symbol) && (
-                      <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                        <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                      <div className="flex items-start gap-3 p-4 rounded-xl" style={{ background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+                        <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
                         <div className="text-sm">
-                          <p className="font-medium text-amber-400 mb-1">Token Configuration Incomplete</p>
-                          <p className="text-oz-text">
+                          <p className="font-medium text-amber-500 mb-1">Token Configuration Incomplete</p>
+                          <p style={{ color: 'var(--oz-text-muted)' }}>
                             {tokenPairs.filter(p => !p.l2Symbol).map(p => p.hubSymbol).join(', ')} token pair(s) missing L2 addresses. 
                             Go back to configure them.
                           </p>
@@ -1153,7 +1148,7 @@ export default function NewNetworkOnboarding() {
                     <button
                       onClick={verifyDeposits}
                       disabled={verifyingDeposits}
-                      className="w-full py-4 rounded-xl bg-oz-blue hover:bg-oz-blue/90 disabled:bg-oz-blue/50 text-white font-semibold transition-all flex items-center justify-center gap-2"
+                      className="w-full oz-btn-primary py-4 flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                       {verifyingDeposits ? (
                         <>
@@ -1171,7 +1166,8 @@ export default function NewNetworkOnboarding() {
                     <button
                       onClick={launchSolver}
                       disabled={verifyingDeposits}
-                      className="w-full py-4 rounded-xl bg-gradient-to-r from-oz-blue to-oz-purple hover:opacity-90 disabled:opacity-50 text-white font-semibold transition-all flex items-center justify-center gap-2 glow-blue"
+                      className="w-full py-4 rounded-xl font-semibold text-white transition-all flex items-center justify-center gap-2 glow-blue disabled:opacity-50"
+                      style={{ background: 'linear-gradient(to right, var(--oz-blue), #6366f1)' }}
                     >
                       {verifyingDeposits ? (
                         <>
@@ -1188,21 +1184,21 @@ export default function NewNetworkOnboarding() {
                   )}
 
                   {/* Status Info */}
-                  <div className="mt-8 p-6 rounded-xl border border-dashed border-oz-border">
+                  <div className="mt-8 p-6 rounded-xl" style={{ border: '2px dashed var(--oz-border)' }}>
                     {depositsVerified ? (
                       <div className="text-center">
-                        <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
-                        <h3 className="font-medium mb-2 text-emerald-400">Deposits Verified!</h3>
-                        <p className="text-sm text-oz-text">
+                        <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
+                        <h3 className="font-medium mb-2 text-emerald-500">Deposits Verified!</h3>
+                        <p className="text-sm" style={{ color: 'var(--oz-text-muted)' }}>
                           Click "Request Solver Deployment" to notify the OpenZeppelin team. 
                           They will review and spin up your solver instance.
                         </p>
                       </div>
                     ) : (
                       <div className="text-center">
-                        <Circle className="w-12 h-12 text-oz-text mx-auto mb-4" />
-                        <h3 className="font-medium mb-2">Awaiting Verification</h3>
-                        <p className="text-sm text-oz-text">
+                        <Circle className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--oz-text-muted)' }} />
+                        <h3 className="font-medium mb-2" style={{ color: 'var(--oz-text)' }}>Awaiting Verification</h3>
+                        <p className="text-sm" style={{ color: 'var(--oz-text-muted)' }}>
                           Deposit the required funds to the KMS address above, then click "Verify Deposits".
                         </p>
                       </div>
@@ -1212,67 +1208,68 @@ export default function NewNetworkOnboarding() {
               ) : (
                 /* Request Submitted State */
                 <div className="text-center py-8 animate-fade-in">
-                  <div className="w-20 h-20 rounded-full bg-oz-blue/20 flex items-center justify-center mx-auto mb-6">
-                    <Mail className="w-10 h-10 text-oz-blue" />
+                  <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
+                    style={{ background: 'var(--oz-blue-light)' }}>
+                    <Mail className="w-10 h-10" style={{ color: 'var(--oz-blue)' }} />
                   </div>
                   <h2 className="text-3xl font-bold mb-3 gradient-text">Request Submitted!</h2>
-                  <p className="text-oz-text mb-8 max-w-md mx-auto">
+                  <p className="mb-8 max-w-md mx-auto" style={{ color: 'var(--oz-text-muted)' }}>
                     The OpenZeppelin team has been notified and will spin up your solver instance shortly.
                   </p>
                   
                   {/* Expected timeline */}
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-oz-card border border-oz-border mb-8">
-                    <Clock className="w-4 h-4 text-oz-accent" />
-                    <span className="text-sm">Expected setup time: <span className="text-white font-medium">1-2 business days</span></span>
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full oz-card mb-8">
+                    <Clock className="w-4 h-4" style={{ color: 'var(--oz-blue)' }} />
+                    <span className="text-sm" style={{ color: 'var(--oz-text-muted)' }}>Expected setup time: <span className="font-medium" style={{ color: 'var(--oz-text)' }}>1-2 business days</span></span>
                   </div>
 
                   {/* Summary */}
-                  <div className="p-6 rounded-xl bg-oz-darker border border-oz-border text-left mb-8">
-                    <h3 className="font-medium mb-4 text-center">Deployment Summary</h3>
+                  <div className="p-6 rounded-xl text-left mb-8" style={{ background: 'var(--oz-surface)', border: '1px solid var(--oz-border)' }}>
+                    <h3 className="font-medium mb-4 text-center" style={{ color: 'var(--oz-text)' }}>Deployment Summary</h3>
                     <div className="space-y-3 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-oz-text">Network</span>
-                        <span className="font-medium">{formData.chainName || 'My L2 Network'}</span>
+                        <span style={{ color: 'var(--oz-text-muted)' }}>Network</span>
+                        <span className="font-medium" style={{ color: 'var(--oz-text)' }}>{formData.chainName || 'My L2 Network'}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-oz-text">Parent (L1)</span>
+                        <span style={{ color: 'var(--oz-text-muted)' }}>Parent (L1)</span>
                         <span className="flex items-center gap-2">
                           {formData.parentChain && (
                             <span className="w-5 h-5">{renderChainIcon(formData.parentChain)}</span>
                           )}
-                          {parentNetworks.find(h => h.id === formData.parentChain)?.name || '—'}
+                          <span style={{ color: 'var(--oz-text)' }}>{parentNetworks.find(h => h.id === formData.parentChain)?.name || '—'}</span>
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-oz-text">HUB Chain</span>
+                        <span style={{ color: 'var(--oz-text-muted)' }}>HUB Chain</span>
                         <span className="flex items-center gap-2">
                           {formData.hubChain && (
                             <span className="w-5 h-5">{renderChainIcon(formData.hubChain)}</span>
                           )}
-                          {hubChains.find(h => h.id === formData.hubChain)?.name}
+                          <span style={{ color: 'var(--oz-text)' }}>{hubChains.find(h => h.id === formData.hubChain)?.name}</span>
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-oz-text">Solver Address</span>
-                        <code className="font-mono text-xs">{kmsAddress?.slice(0, 10)}...{kmsAddress?.slice(-6)}</code>
+                        <span style={{ color: 'var(--oz-text-muted)' }}>Solver Address</span>
+                        <code className="font-mono text-xs" style={{ color: 'var(--oz-text)' }}>{kmsAddress?.slice(0, 10)}...{kmsAddress?.slice(-6)}</code>
                       </div>
                       {formData.backupAdminAddress && (
                         <div className="flex justify-between">
-                          <span className="text-oz-text">Backup Admin</span>
-                          <code className="font-mono text-xs">{formData.backupAdminAddress.slice(0, 10)}...{formData.backupAdminAddress.slice(-6)}</code>
+                          <span style={{ color: 'var(--oz-text-muted)' }}>Backup Admin</span>
+                          <code className="font-mono text-xs" style={{ color: 'var(--oz-text)' }}>{formData.backupAdminAddress.slice(0, 10)}...{formData.backupAdminAddress.slice(-6)}</code>
                         </div>
                       )}
                       <div className="flex justify-between">
-                        <span className="text-oz-text">Token Pairs</span>
-                        <span>{tokenPairs.filter(p => p.l2Symbol).length} configured</span>
+                        <span style={{ color: 'var(--oz-text-muted)' }}>Token Pairs</span>
+                        <span style={{ color: 'var(--oz-text)' }}>{tokenPairs.filter(p => p.l2Symbol).length} configured</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-oz-text">Notifications</span>
-                        <span>{notificationEmails.filter(e => e).length} recipient(s)</span>
+                        <span style={{ color: 'var(--oz-text-muted)' }}>Notifications</span>
+                        <span style={{ color: 'var(--oz-text)' }}>{notificationEmails.filter(e => e).length} recipient(s)</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-oz-text">Status</span>
-                        <span className="flex items-center gap-2 text-amber-400">
+                        <span style={{ color: 'var(--oz-text-muted)' }}>Status</span>
+                        <span className="flex items-center gap-2 text-amber-500">
                           <span className="status-dot status-pending" />
                           Pending Review
                         </span>
@@ -1281,12 +1278,12 @@ export default function NewNetworkOnboarding() {
                   </div>
 
                   {/* What happens next */}
-                  <div className="p-4 rounded-xl bg-oz-blue/5 border border-oz-blue/10 mb-8 text-left">
-                    <h4 className="font-medium text-oz-blue mb-3 flex items-center gap-2">
+                  <div className="p-4 rounded-xl mb-8 text-left" style={{ background: 'var(--oz-blue-light)', border: '1px solid rgba(78, 94, 228, 0.1)' }}>
+                    <h4 className="font-medium mb-3 flex items-center gap-2" style={{ color: 'var(--oz-blue)' }}>
                       <Info className="w-4 h-4" />
                       What happens next?
                     </h4>
-                    <ol className="space-y-2 text-sm text-oz-text list-decimal list-inside">
+                    <ol className="space-y-2 text-sm list-decimal list-inside" style={{ color: 'var(--oz-text-muted)' }}>
                       <li>OpenZeppelin team reviews your configuration</li>
                       <li>Required contracts are deployed on your chain (OIF Settlement, Fast Fill Router, Broadcaster Oracle, Token Registry)</li>
                       <li>Solver instance is spun up with your KMS signer</li>
@@ -1298,14 +1295,14 @@ export default function NewNetworkOnboarding() {
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
                     <a
                       href="/dashboard"
-                      className="px-6 py-3 rounded-xl bg-oz-blue hover:bg-oz-blue/90 text-white font-medium transition-colors inline-flex items-center justify-center gap-2"
+                      className="oz-btn-primary px-6 py-3 inline-flex items-center justify-center gap-2"
                     >
                       <Settings className="w-4 h-4" />
                       Go to Dashboard
                     </a>
                     <a
                       href="/"
-                      className="px-6 py-3 rounded-xl border border-oz-border hover:border-oz-blue/50 text-white font-medium transition-colors inline-flex items-center justify-center gap-2"
+                      className="oz-btn-secondary px-6 py-3 inline-flex items-center justify-center gap-2"
                     >
                       <ExternalLink className="w-4 h-4" />
                       Back to Home
@@ -1318,18 +1315,18 @@ export default function NewNetworkOnboarding() {
 
           {/* Navigation Buttons */}
           {!launchComplete && (
-            <div className="flex items-center justify-between mt-8 pt-6 border-t border-oz-border">
+            <div className="flex items-center justify-between mt-8 pt-6" style={{ borderTop: '1px solid var(--oz-border)' }}>
               <button
                 onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
                 disabled={currentStep === 1}
-                className="px-6 py-2.5 rounded-xl border border-oz-border hover:border-oz-blue/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="oz-btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Back
               </button>
               <button
                 onClick={() => setCurrentStep(Math.min(4, currentStep + 1))}
                 disabled={currentStep === 4}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-oz-blue hover:bg-oz-blue/90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium transition-colors"
+                className="oz-btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Continue
                 <ChevronRight className="w-4 h-4" />

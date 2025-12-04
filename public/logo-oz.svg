@@ -1,0 +1,7 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 22 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="logo">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M21.3393 23.7905V17.5977H14.6345C12.8112 17.5977 11.1223 18.5605 10.1884 20.1322L8.01478 23.7905H21.3393Z" fill="#63D2F9"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M0 0V6.19279H17.6597L21.3393 0H0Z" fill="#4E5EE4"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M8.45172 9.67838L0.0194443 23.7905H7.20355L17.2871 6.90735H13.32C11.3245 6.90735 9.47591 7.95961 8.45172 9.67838Z" fill="var(--fill-0, #63B0F9)"/>
+</g>
+</svg>

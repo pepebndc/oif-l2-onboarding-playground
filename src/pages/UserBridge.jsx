@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { 
   ArrowRightLeft, 
   ChevronDown,
@@ -8,8 +8,66 @@ import {
   Shield,
   CheckCircle2,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  Send,
+  Radio,
+  Wallet
 } from 'lucide-react'
+
+// Confetti component
+function Confetti({ active }) {
+  const [particles, setParticles] = useState([])
+  
+  useEffect(() => {
+    if (active) {
+      const colors = ['#4E5EE4', '#63D2F9', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6']
+      const newParticles = Array.from({ length: 100 }, (_, i) => ({
+        id: i,
+        x: Math.random() * 100,
+        delay: Math.random() * 0.5,
+        duration: 2 + Math.random() * 2,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        size: 4 + Math.random() * 8,
+        rotation: Math.random() * 360,
+      }))
+      setParticles(newParticles)
+      
+      const timer = setTimeout(() => setParticles([]), 4000)
+      return () => clearTimeout(timer)
+    }
+  }, [active])
+  
+  if (!active || particles.length === 0) return null
+  
+  return (
+    <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          className="absolute animate-confetti"
+          style={{
+            left: `${p.x}%`,
+            top: '-20px',
+            width: p.size,
+            height: p.size,
+            backgroundColor: p.color,
+            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+            transform: `rotate(${p.rotation}deg)`,
+            animationDelay: `${p.delay}s`,
+            animationDuration: `${p.duration}s`,
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
+// Bridge status steps
+const bridgeSteps = [
+  { id: 'submitted', label: 'Intent Submitted', icon: Send, description: 'Your intent has been submitted to the network' },
+  { id: 'broadcasted', label: 'Intent Broadcasted', icon: Radio, description: 'Solvers are competing to fill your intent' },
+  { id: 'filled', label: 'Funds Received', icon: Wallet, description: 'Your funds have arrived!' },
+]
 
 const chains = [
   { id: 'my-l2', name: 'My L2', icon: '◆', color: 'emerald' },
@@ -40,7 +98,8 @@ export default function UserBridge() {
   const [isQuoting, setIsQuoting] = useState(false)
   const [quote, setQuote] = useState(null)
   const [isBridging, setIsBridging] = useState(false)
-  const [bridgeSuccess, setBridgeSuccess] = useState(false)
+  const [bridgeStatus, setBridgeStatus] = useState(null) // null, 'submitted', 'broadcasted', 'filled'
+  const [showConfetti, setShowConfetti] = useState(false)
 
   const swapChains = () => {
     const temp = fromChain
@@ -74,35 +133,60 @@ export default function UserBridge() {
 
   const executeBridge = () => {
     setIsBridging(true)
+    setBridgeStatus('submitted')
+    
+    // Step 1: Intent Submitted -> Broadcasted (after 1.5s)
     setTimeout(() => {
-      setIsBridging(false)
-      setBridgeSuccess(true)
+      setBridgeStatus('broadcasted')
+      
+      // Step 2: Broadcasted -> Filled (after another 2s)
       setTimeout(() => {
-        setBridgeSuccess(false)
-        setAmount('')
-        setQuote(null)
-      }, 3000)
-    }, 2500)
+        setBridgeStatus('filled')
+        setIsBridging(false)
+        setShowConfetti(true)
+        
+        // Reset after celebration
+        setTimeout(() => {
+          setShowConfetti(false)
+          setBridgeStatus(null)
+          setAmount('')
+          setQuote(null)
+        }, 5000)
+      }, 2000)
+    }, 1500)
   }
+
+  const resetBridge = useCallback(() => {
+    setBridgeStatus(null)
+    setIsBridging(false)
+    setShowConfetti(false)
+    setAmount('')
+    setQuote(null)
+  }, [])
 
   const SelectDropdown = ({ options, selected, onSelect, show, onToggle, label }) => (
     <div className="relative">
       <button
         onClick={onToggle}
-        className="flex items-center justify-between gap-2 w-full px-4 py-3 rounded-xl bg-oz-darker border border-oz-border hover:border-oz-blue/50 transition-colors text-left"
+        className="flex items-center justify-between gap-2 w-full px-4 py-3 rounded-xl transition-colors text-left"
+        style={{ 
+          background: 'var(--oz-surface)', 
+          border: '1px solid var(--oz-border)'
+        }}
       >
         <div className="flex items-center gap-3">
           {selected.icon && <span className="text-lg">{selected.icon}</span>}
           <div>
-            <div className="text-xs text-oz-text">{label}</div>
-            <div className="font-medium">{selected.name || selected.symbol}</div>
+            <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>{label}</div>
+            <div className="font-medium" style={{ color: 'var(--oz-text)' }}>{selected.name || selected.symbol}</div>
           </div>
         </div>
-        <ChevronDown className={`w-4 h-4 text-oz-text transition-transform ${show ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-4 h-4 transition-transform ${show ? 'rotate-180' : ''}`} style={{ color: 'var(--oz-text-muted)' }} />
       </button>
       
       {show && (
-        <div className="absolute top-full left-0 right-0 mt-2 p-2 rounded-xl bg-oz-card border border-oz-border shadow-xl z-20 max-h-64 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-2 p-2 rounded-xl shadow-xl z-20 max-h-64 overflow-y-auto"
+          style={{ background: 'var(--oz-card)', border: '1px solid var(--oz-border)' }}>
           {options.map((option) => (
             <button
               key={option.id}
@@ -110,19 +194,19 @@ export default function UserBridge() {
                 onSelect(option)
                 onToggle()
               }}
-              className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-left transition-colors ${
-                (selected.id === option.id) 
-                  ? 'bg-oz-blue/10 text-oz-blue' 
-                  : 'hover:bg-oz-darker'
-              }`}
+              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-left transition-colors"
+              style={{ 
+                background: selected.id === option.id ? 'var(--oz-blue-light)' : 'transparent',
+                color: selected.id === option.id ? 'var(--oz-blue)' : 'var(--oz-text)'
+              }}
             >
               {option.icon && <span className="text-lg">{option.icon}</span>}
               <div className="flex-1">
                 <div className="font-medium">{option.name}</div>
-                {option.symbol && <div className="text-xs text-oz-text">{option.symbol}</div>}
-                {option.balance && <div className="text-xs text-oz-text">Balance: {option.balance}</div>}
+                {option.symbol && <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>{option.symbol}</div>}
+                {option.balance && <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>Balance: {option.balance}</div>}
               </div>
-              {selected.id === option.id && <CheckCircle2 className="w-4 h-4 text-oz-blue" />}
+              {selected.id === option.id && <CheckCircle2 className="w-4 h-4" style={{ color: 'var(--oz-blue)' }} />}
             </button>
           ))}
         </div>
@@ -131,26 +215,27 @@ export default function UserBridge() {
   )
 
   return (
-    <div className="min-h-screen pt-24 pb-16">
+    <div className="min-h-screen pt-24 pb-16" style={{ background: 'var(--oz-bg)' }}>
+      <Confetti active={showConfetti} />
       <div className="max-w-lg mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-oz-border bg-oz-card/50 mb-6">
-            <ArrowRightLeft className="w-4 h-4 text-oz-blue" />
-            <span className="text-sm text-oz-text">Fast Intent Bridge</span>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full oz-card mb-6">
+            <ArrowRightLeft className="w-4 h-4" style={{ color: 'var(--oz-blue)' }} />
+            <span className="text-sm" style={{ color: 'var(--oz-text-muted)' }}>Fast Intent Bridge</span>
           </div>
-          <h1 className="text-3xl font-bold mb-2">Bridge Assets</h1>
-          <p className="text-oz-text">Transfer tokens between chains using OIF intent-based bridging.</p>
+          <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--oz-text)' }}>Bridge Assets</h1>
+          <p style={{ color: 'var(--oz-text-muted)' }}>Transfer tokens between chains using OIF intent-based bridging.</p>
         </div>
 
         {/* Bridge Card */}
-        <div className="rounded-2xl bg-oz-card border border-oz-border p-6 mb-8">
+        <div className="oz-card p-6 mb-8">
           {/* From Section */}
           <div className="mb-2">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-oz-text">From</span>
-              <span className="text-xs text-oz-text">
-                Balance: <span className="text-white">{fromToken.balance} {fromToken.symbol}</span>
+              <span className="text-sm" style={{ color: 'var(--oz-text-muted)' }}>From</span>
+              <span className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>
+                Balance: <span style={{ color: 'var(--oz-text)' }}>{fromToken.balance} {fromToken.symbol}</span>
               </span>
             </div>
             
@@ -165,7 +250,7 @@ export default function UserBridge() {
                   label="Network"
                 />
               </div>
-              <div className="w-32">
+              <div className="w-40">
                 <SelectDropdown
                   options={tokens}
                   selected={fromToken}
@@ -183,11 +268,12 @@ export default function UserBridge() {
                 value={amount}
                 onChange={(e) => { setAmount(e.target.value); setQuote(null); }}
                 placeholder="0.00"
-                className="w-full px-4 py-4 rounded-xl bg-oz-darker border border-oz-border focus:border-oz-blue transition-colors text-2xl font-medium"
+                className="oz-input w-full py-4 text-2xl font-medium"
               />
               <button
                 onClick={() => setAmount(fromToken.balance)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 px-3 py-1 rounded-lg bg-oz-blue/10 text-oz-blue text-xs font-medium hover:bg-oz-blue/20 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 px-3 py-1 rounded-lg text-xs font-medium transition-colors"
+                style={{ background: 'var(--oz-blue-light)', color: 'var(--oz-blue)' }}
               >
                 MAX
               </button>
@@ -198,7 +284,8 @@ export default function UserBridge() {
           <div className="flex justify-center -my-2 relative z-10">
             <button
               onClick={swapChains}
-              className="w-10 h-10 rounded-xl bg-oz-card border border-oz-border hover:border-oz-blue/50 flex items-center justify-center transition-all hover:rotate-180 duration-300"
+              className="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:rotate-180 duration-300"
+              style={{ background: 'var(--oz-card)', border: '1px solid var(--oz-border)', color: 'var(--oz-text)' }}
             >
               <ArrowDown className="w-4 h-4" />
             </button>
@@ -207,7 +294,7 @@ export default function UserBridge() {
           {/* To Section */}
           <div className="mt-2">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-oz-text">To</span>
+              <span className="text-sm" style={{ color: 'var(--oz-text-muted)' }}>To</span>
             </div>
             
             <div className="flex gap-3 mb-3">
@@ -221,7 +308,7 @@ export default function UserBridge() {
                   label="Network"
                 />
               </div>
-              <div className="w-32">
+              <div className="w-40">
                 <SelectDropdown
                   options={tokens}
                   selected={toToken}
@@ -239,11 +326,11 @@ export default function UserBridge() {
                 value={quote ? quote.outputAmount : ''}
                 readOnly
                 placeholder="0.00"
-                className="w-full px-4 py-4 rounded-xl bg-oz-darker/50 border border-oz-border text-2xl font-medium text-oz-text cursor-not-allowed"
+                className="oz-input w-full py-4 text-2xl font-medium cursor-not-allowed opacity-70"
               />
               {isQuoting && (
                 <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                  <Loader2 className="w-5 h-5 animate-spin text-oz-blue" />
+                  <Loader2 className="w-5 h-5 animate-spin" style={{ color: 'var(--oz-blue)' }} />
                 </div>
               )}
             </div>
@@ -251,12 +338,13 @@ export default function UserBridge() {
 
           {/* Quote Details */}
           {quote && (
-            <div className="mt-6 p-4 rounded-xl bg-oz-darker border border-oz-border animate-fade-in">
+            <div className="mt-6 p-4 rounded-xl animate-fade-in" style={{ background: 'var(--oz-surface)', border: '1px solid var(--oz-border)' }}>
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-medium">Quote Details</span>
+                <span className="text-sm font-medium" style={{ color: 'var(--oz-text)' }}>Quote Details</span>
                 <button 
                   onClick={getQuote}
-                  className="flex items-center gap-1.5 text-xs text-oz-blue hover:underline"
+                  className="flex items-center gap-1.5 text-xs hover:underline"
+                  style={{ color: 'var(--oz-blue)' }}
                 >
                   <RefreshCw className="w-3 h-3" />
                   Refresh
@@ -265,26 +353,26 @@ export default function UserBridge() {
               
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-oz-text">Route</span>
-                  <span className="flex items-center gap-1.5">
-                    <Zap className="w-3 h-3 text-oz-blue" />
+                  <span style={{ color: 'var(--oz-text-muted)' }}>Route</span>
+                  <span className="flex items-center gap-1.5" style={{ color: 'var(--oz-text)' }}>
+                    <Zap className="w-3 h-3" style={{ color: 'var(--oz-blue)' }} />
                     {quote.route}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-oz-text">Fee</span>
-                  <span>{quote.fee} {fromToken.symbol}</span>
+                  <span style={{ color: 'var(--oz-text-muted)' }}>Fee</span>
+                  <span style={{ color: 'var(--oz-text)' }}>{quote.fee} {fromToken.symbol}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-oz-text">Estimated Time</span>
-                  <span className="flex items-center gap-1.5">
-                    <Clock className="w-3 h-3 text-emerald-400" />
+                  <span style={{ color: 'var(--oz-text-muted)' }}>Estimated Time</span>
+                  <span className="flex items-center gap-1.5" style={{ color: 'var(--oz-text)' }}>
+                    <Clock className="w-3 h-3 text-emerald-500" />
                     {quote.estimatedTime}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-oz-text">You Receive</span>
-                  <span className="font-medium text-emerald-400">
+                  <span style={{ color: 'var(--oz-text-muted)' }}>You Receive</span>
+                  <span className="font-medium text-emerald-500">
                     {quote.outputAmount} {toToken.symbol}
                   </span>
                 </div>
@@ -292,58 +380,138 @@ export default function UserBridge() {
             </div>
           )}
 
-          {/* Action Buttons */}
-          <div className="mt-6">
-            {!quote ? (
-              <button
-                onClick={getQuote}
-                disabled={!amount || parseFloat(amount) <= 0 || isQuoting}
-                className="w-full py-4 rounded-xl bg-oz-blue hover:bg-oz-blue/90 disabled:bg-oz-blue/30 disabled:cursor-not-allowed text-white font-semibold transition-all flex items-center justify-center gap-2"
-              >
-                {isQuoting ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Getting Quote...
-                  </>
-                ) : (
-                  'Get Quote'
+          {/* Bridge Status Progress */}
+          {bridgeStatus && (
+            <div className="mt-6 p-4 rounded-xl animate-fade-in" style={{ background: 'var(--oz-surface)', border: '1px solid var(--oz-border)' }}>
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-sm font-medium" style={{ color: 'var(--oz-text)' }}>Bridge Progress</span>
+                {bridgeStatus === 'filled' && (
+                  <span className="text-xs px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-500 font-medium">
+                    Complete!
+                  </span>
                 )}
-              </button>
-            ) : bridgeSuccess ? (
-              <div className="w-full py-4 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-semibold flex items-center justify-center gap-2">
-                <CheckCircle2 className="w-5 h-5" />
-                Bridge Initiated Successfully!
               </div>
-            ) : (
-              <button
-                onClick={executeBridge}
-                disabled={isBridging}
-                className="w-full py-4 rounded-xl bg-gradient-to-r from-oz-blue to-oz-purple hover:opacity-90 disabled:opacity-50 text-white font-semibold transition-all flex items-center justify-center gap-2 glow-blue"
-              >
-                {isBridging ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Bridging...
-                  </>
-                ) : (
-                  <>
-                    <ArrowRightLeft className="w-5 h-5" />
-                    Bridge {amount} {fromToken.symbol}
-                  </>
-                )}
-              </button>
-            )}
-          </div>
+              
+              <div className="space-y-3">
+                {bridgeSteps.map((step, index) => {
+                  const currentIndex = bridgeSteps.findIndex(s => s.id === bridgeStatus)
+                  const isComplete = index < currentIndex || (index === currentIndex && bridgeStatus === 'filled')
+                  const isCurrent = index === currentIndex && bridgeStatus !== 'filled'
+                  const isPending = index > currentIndex
+                  
+                  return (
+                    <div key={step.id} className="flex items-start gap-3">
+                      {/* Status indicator */}
+                      <div className="flex flex-col items-center">
+                        <div 
+                          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-500 ${
+                            isComplete ? 'bg-emerald-500' : 
+                            isCurrent ? 'bg-oz-blue animate-pulse' : 
+                            'bg-transparent'
+                          }`}
+                          style={{ 
+                            border: isPending ? '2px solid var(--oz-border)' : 'none',
+                          }}
+                        >
+                          {isComplete ? (
+                            <CheckCircle2 className="w-4 h-4 text-white" />
+                          ) : isCurrent ? (
+                            <Loader2 className="w-4 h-4 text-white animate-spin" />
+                          ) : (
+                            <step.icon className="w-4 h-4" style={{ color: 'var(--oz-text-muted)' }} />
+                          )}
+                        </div>
+                        {index < bridgeSteps.length - 1 && (
+                          <div 
+                            className="w-0.5 h-6 mt-1 transition-all duration-500"
+                            style={{ 
+                              background: isComplete ? '#10b981' : 'var(--oz-border)'
+                            }}
+                          />
+                        )}
+                      </div>
+                      
+                      {/* Step content */}
+                      <div className="flex-1 pb-2">
+                        <div 
+                          className={`font-medium text-sm transition-colors ${
+                            isComplete ? 'text-emerald-500' : 
+                            isCurrent ? '' : ''
+                          }`}
+                          style={{ color: isComplete ? '#10b981' : isCurrent ? 'var(--oz-text)' : 'var(--oz-text-muted)' }}
+                        >
+                          {step.label}
+                        </div>
+                        <div className="text-xs mt-0.5" style={{ color: 'var(--oz-text-muted)' }}>
+                          {step.description}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              
+              {bridgeStatus === 'filled' && (
+                <button
+                  onClick={resetBridge}
+                  className="w-full mt-4 oz-btn-secondary text-sm"
+                >
+                  Bridge More
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          {!bridgeStatus && (
+            <div className="mt-6">
+              {!quote ? (
+                <button
+                  onClick={getQuote}
+                  disabled={!amount || parseFloat(amount) <= 0 || isQuoting}
+                  className="w-full oz-btn-primary py-4 flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  {isQuoting ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Getting Quote...
+                    </>
+                  ) : (
+                    'Get Quote'
+                  )}
+                </button>
+              ) : (
+                <button
+                  onClick={executeBridge}
+                  disabled={isBridging}
+                  className="w-full py-4 rounded-xl text-white font-semibold transition-all flex items-center justify-center gap-2 glow-blue disabled:opacity-50"
+                  style={{ background: 'linear-gradient(to right, var(--oz-blue), #6366f1)' }}
+                >
+                  {isBridging ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Bridging...
+                    </>
+                  ) : (
+                    <>
+                      <ArrowRightLeft className="w-5 h-5" />
+                      Bridge {amount} {fromToken.symbol}
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Trust Indicators */}
-        <div className="flex items-center justify-center gap-6 text-xs text-oz-text">
+        <div className="flex items-center justify-center gap-6 text-xs" style={{ color: 'var(--oz-text-muted)' }}>
           <div className="flex items-center gap-1.5">
-            <Shield className="w-4 h-4 text-oz-blue" />
+            <Shield className="w-4 h-4" style={{ color: 'var(--oz-blue)' }} />
             <span>Secured by Broadcaster</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <Zap className="w-4 h-4 text-emerald-400" />
+            <Zap className="w-4 h-4 text-emerald-500" />
             <span>OIF Powered</span>
           </div>
         </div>
