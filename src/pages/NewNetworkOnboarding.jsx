@@ -20,7 +20,8 @@ import {
   Coins,
   Send,
   Mail,
-  Clock
+  Clock,
+  Shield
 } from 'lucide-react'
 
 const steps = [
@@ -491,7 +492,24 @@ export default function NewNetworkOnboarding() {
           {currentStep === 1 && (
             <div className="animate-fade-in">
               <h2 className="text-2xl font-semibold mb-2" style={{ color: 'var(--oz-text)' }}>Network Configuration</h2>
-              <p style={{ color: 'var(--oz-text-muted)' }} className="mb-8">Provide details about your L2 chain and select a HUB for connectivity.</p>
+              <p style={{ color: 'var(--oz-text-muted)' }} className="mb-6">Provide details about your L2 chain and select a HUB for connectivity.</p>
+
+              {/* Trust Banner */}
+              <div className="flex items-start gap-4 p-4 rounded-xl mb-8" 
+                style={{ background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                  style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
+                  <Shield className="w-5 h-5 text-emerald-500" />
+                </div>
+                <div>
+                  <h4 className="font-medium mb-1 text-emerald-600 dark:text-emerald-400">Reviewed by OpenZeppelin</h4>
+                  <p className="text-sm" style={{ color: 'var(--oz-text-muted)' }}>
+                    Every deployment request is reviewed by the OpenZeppelin team before your solver goes live. 
+                    We verify your configuration, deploy the required contracts, and ensure everything is set up 
+                    correctly for secure operation.
+                  </p>
+                </div>
+              </div>
 
               {/* Wallet Connection */}
               <div className="p-4 rounded-xl mb-8" style={{ background: 'var(--oz-surface)', border: '1px solid var(--oz-border)' }}>
