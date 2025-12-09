@@ -17,7 +17,10 @@ import {
   Link2,
   Sun,
   Moon,
-  ExternalLink
+  ExternalLink,
+  Server,
+  Cpu,
+  GitBranch
 } from 'lucide-react'
 import { useTheme } from '../App'
 
@@ -618,6 +621,146 @@ export default function Landing() {
             </div>
             <div>
               <SettlementTimeline />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* System Architecture Overview Section */}
+      <section className="py-20" style={{ borderTop: '1px solid var(--oz-border)' }}>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4" style={{ color: 'var(--oz-text)' }}>System Architecture</h2>
+            <p className="max-w-2xl mx-auto" style={{ color: 'var(--oz-text-muted)' }}>
+              OIF onboarding deploys a complete bridging infrastructure across three key areas, 
+              enabling fast intent-based transfers between your L2 and the broader ecosystem.
+            </p>
+          </div>
+
+          {/* Architecture Components Grid */}
+          <div className="grid md:grid-cols-3 gap-6 mb-12">
+            {/* New L2 Chain */}
+            <div className="oz-card p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                  style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
+                  <Layers className="w-5 h-5 text-emerald-500" />
+                </div>
+                <h3 className="text-lg font-semibold" style={{ color: 'var(--oz-text)' }}>Your L2 Chain</h3>
+              </div>
+              <p className="text-sm mb-4" style={{ color: 'var(--oz-text-muted)' }}>
+                Deploy oracle contracts powered by Broadcaster, settlement contracts, and the Fast Fill Router 
+                that enables instant bridging by front-running the canonical bridge.
+              </p>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-center gap-2" style={{ color: 'var(--oz-text-muted)' }}>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                  <span>Broadcaster Oracle Contracts</span>
+                </li>
+                <li className="flex items-center gap-2" style={{ color: 'var(--oz-text-muted)' }}>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                  <span>OIF Settlement Contracts</span>
+                </li>
+                <li className="flex items-center gap-2" style={{ color: 'var(--oz-text-muted)' }}>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                  <span>Fast Fill Router</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* HUB Chain */}
+            <div className="oz-card p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                  style={{ background: 'rgba(99, 102, 241, 0.1)' }}>
+                  <GitBranch className="w-5 h-5 text-indigo-500" />
+                </div>
+                <h3 className="text-lg font-semibold" style={{ color: 'var(--oz-text)' }}>HUB Chain</h3>
+              </div>
+              <p className="text-sm mb-4" style={{ color: 'var(--oz-text-muted)' }}>
+                Connect to an existing HUB chain with high liquidity and fast settlement times. 
+                The HUB serves as the gateway to other protocols and chains.
+              </p>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-center gap-2" style={{ color: 'var(--oz-text-muted)' }}>
+                  <CheckCircle2 className="w-4 h-4 text-indigo-500 flex-shrink-0" />
+                  <span>Broadcaster Integration</span>
+                </li>
+                <li className="flex items-center gap-2" style={{ color: 'var(--oz-text-muted)' }}>
+                  <CheckCircle2 className="w-4 h-4 text-indigo-500 flex-shrink-0" />
+                  <span>OIF Settlement Contracts</span>
+                </li>
+                <li className="flex items-center gap-2" style={{ color: 'var(--oz-text-muted)' }}>
+                  <CheckCircle2 className="w-4 h-4 text-indigo-500 flex-shrink-0" />
+                  <span>Solver Liquidity Pool</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Offchain Infrastructure */}
+            <div className="oz-card p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+                  style={{ background: 'var(--oz-blue-light)' }}>
+                  <Server className="w-5 h-5" style={{ color: 'var(--oz-blue)' }} />
+                </div>
+                <h3 className="text-lg font-semibold" style={{ color: 'var(--oz-text)' }}>Offchain Infrastructure</h3>
+              </div>
+              <p className="text-sm mb-4" style={{ color: 'var(--oz-text-muted)' }}>
+                A managed OIF solver instance monitors for intents and fills them, handling 
+                liquidity management and execution logic automatically.
+              </p>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-center gap-2" style={{ color: 'var(--oz-text-muted)' }}>
+                  <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--oz-blue)' }} />
+                  <span>Execution Logic System</span>
+                </li>
+                <li className="flex items-center gap-2" style={{ color: 'var(--oz-text-muted)' }}>
+                  <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--oz-blue)' }} />
+                  <span>Management Dashboard</span>
+                </li>
+                <li className="flex items-center gap-2" style={{ color: 'var(--oz-text-muted)' }}>
+                  <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--oz-blue)' }} />
+                  <span>AWS KMS Signer</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Route Operators */}
+          <div className="oz-card p-6">
+            <h3 className="text-lg font-semibold mb-6 text-center" style={{ color: 'var(--oz-text)' }}>Route Operators</h3>
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="text-center p-4 rounded-xl" style={{ background: 'var(--oz-surface)' }}>
+                <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3"
+                  style={{ background: 'rgba(139, 92, 246, 0.1)' }}>
+                  <Shield className="w-6 h-6 text-violet-500" />
+                </div>
+                <h4 className="font-medium mb-2" style={{ color: 'var(--oz-text)' }}>Canonical Bridge</h4>
+                <p className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>
+                  Native L2 bridge operating bidirectional transfers to L1 with built-in token bridging support.
+                </p>
+              </div>
+              <div className="text-center p-4 rounded-xl" style={{ background: 'var(--oz-surface)' }}>
+                <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3"
+                  style={{ background: 'rgba(245, 158, 11, 0.1)' }}>
+                  <Link2 className="w-6 h-6 text-amber-500" />
+                </div>
+                <h4 className="font-medium mb-2" style={{ color: 'var(--oz-text)' }}>Third Party OIF Intents</h4>
+                <p className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>
+                  Existing routes in the OIF ecosystem enabling rebalancing and connection with additional chains.
+                </p>
+              </div>
+              <div className="text-center p-4 rounded-xl" style={{ background: 'var(--oz-surface)' }}>
+                <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3"
+                  style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
+                  <Zap className="w-6 h-6 text-emerald-500" />
+                </div>
+                <h4 className="font-medium mb-2" style={{ color: 'var(--oz-text)' }}>Your L2 Solver</h4>
+                <p className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>
+                  Dedicated solver operating HUB to L2 routes with canonical bridge speed-ups via Fast Fill.
+                </p>
+              </div>
             </div>
           </div>
         </div>
