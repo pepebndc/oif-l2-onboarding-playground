@@ -424,8 +424,8 @@ export default function NewNetworkOnboarding() {
   }
 
   return (
-    <div className="min-h-screen pt-24 pb-16" style={{ background: 'var(--oz-bg)' }}>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6">
+    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8" style={{ background: 'var(--oz-bg)' }}>
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full oz-card mb-6">

@@ -352,9 +352,9 @@ export default function UserBridge() {
   )
 
   return (
-    <div className="min-h-screen pt-24 pb-16" style={{ background: 'var(--oz-bg)' }}>
+    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8" style={{ background: 'var(--oz-bg)' }}>
       <Confetti active={showConfetti} cardRef={bridgeCardRef} />
-      <div className="max-w-lg mx-auto px-4 sm:px-6">
+      <div className="max-w-lg mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full oz-card mb-6">

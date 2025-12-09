@@ -205,7 +205,7 @@ export default function SolverDashboard() {
   // Login Screen
   if (!isConnected) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--oz-bg)' }}>
+      <div className="min-h-screen flex items-center justify-center px-4 py-8" style={{ background: 'var(--oz-bg)' }}>
         <div className="max-w-md w-full">
           <div className="text-center mb-8">
             <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-oz-blue to-oz-purple flex items-center justify-center mx-auto mb-6">
@@ -259,8 +259,8 @@ export default function SolverDashboard() {
   }
 
   return (
-    <div className="min-h-screen pt-24 pb-16" style={{ background: 'var(--oz-bg)' }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8" style={{ background: 'var(--oz-bg)' }}>
+      <div className="max-w-7xl mx-auto">
         {/* Network Header - Prominent */}
         <div className="oz-card p-8 mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
