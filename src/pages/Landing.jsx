@@ -507,8 +507,8 @@ export default function Landing() {
             className="text-lg md:text-xl text-center max-w-2xl mx-auto mb-12 animate-fade-in"
             style={{ color: 'var(--oz-text-muted)', animationDelay: '0.3s' }}
           >
-            Deploy OIF infrastructure on your chain in minutes. Enable fast intent-based 
-            bridging powered by OpenZeppelin's security standards.
+            Deploy Open Intents Framework (OIF) infrastructure on your chain in minutes. 
+            Enable fast intent-based bridging powered by OpenZeppelin's security standards.
           </p>
 
           {/* CTA Buttons */}
