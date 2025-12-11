@@ -1,35 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { 
   Layers, 
-  ChevronRight, 
   Check, 
   AlertCircle,
   Loader2,
   ExternalLink,
-  Copy,
-  Server,
   Wallet,
   Settings,
-  CheckCircle2,
-  Circle,
   Info,
-  Plus,
-  X,
-  Trash2,
-  RefreshCw,
-  Coins,
-  Send,
   Mail,
   Clock,
-  Shield
+  Shield,
+  Bell,
+  Send
 } from 'lucide-react'
-
-const steps = [
-  { id: 1, title: 'Network Configuration', icon: Server },
-  { id: 2, title: 'Solver Setup', icon: Settings },
-  { id: 3, title: 'Token Sets', icon: Coins },
-  { id: 4, title: 'Fund & Launch', icon: Wallet },
-]
 
 // Real chain icons as SVG components
 const ChainIcons = {
@@ -125,40 +109,7 @@ const hubChains = [
   { id: 'linea', name: 'Linea', settlementTime: '~2 min' },
 ]
 
-
-// Default token sets - L2 addresses need to be provided by user
-// Token sets include L1, HUB, and L2 addresses (solver only holds liquidity on HUB and L2)
-const defaultTokenSets = [
-  {
-    id: 1,
-    l1Address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', // USDC on Ethereum
-    l1Symbol: 'USDC',
-    l1Decimals: '6',
-    hubAddress: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-    hubSymbol: 'USDC',
-    hubDecimals: '6',
-    l2Address: '', // User must provide
-    l2Symbol: '', // Will be fetched when L2 address is provided
-    l2Decimals: '',
-    isDefault: true,
-  },
-  {
-    id: 2,
-    l1Address: '0xdAC17F958D2ee523a2206206994597C13D831ec7', // USDT on Ethereum
-    l1Symbol: 'USDT',
-    l1Decimals: '6',
-    hubAddress: '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2',
-    hubSymbol: 'USDT',
-    hubDecimals: '18',
-    l2Address: '', // User must provide
-    l2Symbol: '', // Will be fetched when L2 address is provided
-    l2Decimals: '',
-    isDefault: true,
-  },
-]
-
 export default function NewNetworkOnboarding() {
-  const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
     chainName: '',
     chainId: '',
@@ -167,40 +118,12 @@ export default function NewNetworkOnboarding() {
     rollupStack: '',
     parentChain: '',
     hubChain: '',
-    backupAdminAddress: '',
+    notificationEmail: '',
   })
-  const [notificationEmails, setNotificationEmails] = useState([''])
   
-  // AWS KMS state
-  const [generatingKMS, setGeneratingKMS] = useState(false)
-  const [kmsAddress, setKmsAddress] = useState(null)
-  
-  // Token sets state - initialized with defaults
-  const [tokenSets, setTokenSets] = useState(defaultTokenSets)
-  const [newTokenSet, setNewTokenSet] = useState({
-    l1Address: '',
-    l1Symbol: '',
-    l1Decimals: '',
-    hubAddress: '',
-    hubSymbol: '',
-    hubDecimals: '',
-    l2Address: '',
-    l2Symbol: '',
-    l2Decimals: '',
-    l1Loading: false,
-    hubLoading: false,
-    l2Loading: false,
-  })
-
-  // Deposit verification state
-  const [verifyingDeposits, setVerifyingDeposits] = useState(false)
-  const [depositsVerified, setDepositsVerified] = useState(false)
-  const [launchComplete, setLaunchComplete] = useState(false)
-  const [isSubmittingRequest, setIsSubmittingRequest] = useState(false)
-  const [depositProgress, setDepositProgress] = useState({
-    eth: 0,
-    tokens: 0,
-  })
+  // Submission states
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [requestSubmitted, setRequestSubmitted] = useState(false)
 
   // Wallet connection state
   const [walletConnecting, setWalletConnecting] = useState(false)
@@ -219,209 +142,157 @@ export default function NewNetworkOnboarding() {
     }, 1000)
   }
 
-  // Email handlers
-  const addEmail = () => {
-    setNotificationEmails([...notificationEmails, ''])
-  }
-
-  const removeEmail = (index) => {
-    if (notificationEmails.length > 1) {
-      setNotificationEmails(notificationEmails.filter((_, i) => i !== index))
-    }
-  }
-
-  const updateEmail = (index, value) => {
-    const updated = [...notificationEmails]
-    updated[index] = value
-    setNotificationEmails(updated)
-  }
-
-  // Generate AWS KMS
-  const generateKMS = () => {
-    setGeneratingKMS(true)
+  // Submit request
+  const submitRequest = () => {
+    setIsSubmitting(true)
     setTimeout(() => {
-      setKmsAddress('0x742d35Cc6634C0532925a3b844Bc9e7595f2bD73')
-      setGeneratingKMS(false)
-    }, 5000)
-  }
-
-  // Auto-generate KMS when entering step 2 (Solver Setup)
-  useEffect(() => {
-    if (currentStep === 2 && !kmsAddress && !generatingKMS) {
-      generateKMS()
-    }
-  }, [currentStep])
-
-  // Verify deposits simulation
-  const verifyDeposits = () => {
-    setVerifyingDeposits(true)
-    
-    // Simulate ETH deposit verification
-    const ethInterval = setInterval(() => {
-      setDepositProgress(prev => {
-        if (prev.eth >= 100) {
-          clearInterval(ethInterval)
-          return prev
-        }
-        return { ...prev, eth: Math.min(prev.eth + 20, 100) }
-      })
-    }, 400)
-
-    // Simulate token deposit verification after ETH
-    setTimeout(() => {
-      const tokenInterval = setInterval(() => {
-        setDepositProgress(prev => {
-          if (prev.tokens >= 100) {
-            clearInterval(tokenInterval)
-            return prev
-          }
-          return { ...prev, tokens: Math.min(prev.tokens + 25, 100) }
-        })
-      }, 300)
-
-      setTimeout(() => {
-        clearInterval(tokenInterval)
-        setDepositProgress({ eth: 100, tokens: 100 })
-        setDepositsVerified(true)
-        setVerifyingDeposits(false)
-      }, 1500)
-    }, 2500)
-  }
-
-  // Launch solver
-  const launchSolver = () => {
-    setIsSubmittingRequest(true)
-    setTimeout(() => {
-      setLaunchComplete(true)
-      setIsSubmittingRequest(false)
+      setRequestSubmitted(true)
+      setIsSubmitting(false)
     }, 2000)
   }
 
-  // Token set handlers
-  const simulateFetchTokenInfo = (address, side) => {
-    const mockTokens = {
-      '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48': { symbol: 'USDC', decimals: '6' },
-      '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913': { symbol: 'USDC', decimals: '6' },
-      '0xdAC17F958D2ee523a2206206994597C13D831ec7': { symbol: 'USDT', decimals: '6' },
-      '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2': { symbol: 'USDT', decimals: '6' },
-      '0x4200000000000000000000000000000000000006': { symbol: 'WETH', decimals: '18' },
-      '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2': { symbol: 'WETH', decimals: '18' },
-      '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599': { symbol: 'WBTC', decimals: '8' },
-    }
-
-    if (address.length === 42 && address.startsWith('0x')) {
-      setNewTokenSet(prev => ({
-        ...prev,
-        [`${side}Loading`]: true
-      }))
-      
-      setTimeout(() => {
-        const tokenInfo = mockTokens[address] || { symbol: 'TOKEN', decimals: '18' }
-        setNewTokenSet(prev => ({
-          ...prev,
-          [`${side}Symbol`]: tokenInfo.symbol,
-          [`${side}Decimals`]: tokenInfo.decimals,
-          [`${side}Loading`]: false
-        }))
-      }, 1500)
-    }
-  }
-
-  const handleL1AddressChange = (value) => {
-    setNewTokenSet(prev => ({ ...prev, l1Address: value, l1Symbol: '', l1Decimals: '' }))
-    if (value.length === 42) {
-      simulateFetchTokenInfo(value, 'l1')
-    }
-  }
-
-  const handleHubAddressChange = (value) => {
-    setNewTokenSet(prev => ({ ...prev, hubAddress: value, hubSymbol: '', hubDecimals: '' }))
-    if (value.length === 42) {
-      simulateFetchTokenInfo(value, 'hub')
-    }
-  }
-
-  const handleL2AddressChange = (value) => {
-    setNewTokenSet(prev => ({ ...prev, l2Address: value, l2Symbol: '', l2Decimals: '' }))
-    if (value.length === 42) {
-      simulateFetchTokenInfo(value, 'l2')
-    }
-  }
-
-  const addTokenSet = () => {
-    if (newTokenSet.l1Address && newTokenSet.hubAddress && newTokenSet.l2Address && 
-        newTokenSet.l1Symbol && newTokenSet.hubSymbol && newTokenSet.l2Symbol) {
-      setTokenSets([...tokenSets, {
-        id: Date.now(),
-        l1Address: newTokenSet.l1Address,
-        l1Symbol: newTokenSet.l1Symbol,
-        l1Decimals: newTokenSet.l1Decimals,
-        hubAddress: newTokenSet.hubAddress,
-        hubSymbol: newTokenSet.hubSymbol,
-        hubDecimals: newTokenSet.hubDecimals,
-        l2Address: newTokenSet.l2Address,
-        l2Symbol: newTokenSet.l2Symbol,
-        l2Decimals: newTokenSet.l2Decimals,
-      }])
-      setNewTokenSet({
-        l1Address: '',
-        l1Symbol: '',
-        l1Decimals: '',
-        hubAddress: '',
-        hubSymbol: '',
-        hubDecimals: '',
-        l2Address: '',
-        l2Symbol: '',
-        l2Decimals: '',
-        l1Loading: false,
-        hubLoading: false,
-        l2Loading: false,
-      })
-    }
-  }
-
-  const removeTokenSet = (id) => {
-    setTokenSets(tokenSets.filter(t => t.id !== id))
-  }
-
-  // Update L2 address for existing token set (for default tokens)
-  const updateTokenSetL2Address = (id, address) => {
-    setTokenSets(tokenSets.map(t => 
-      t.id === id ? { ...t, l2Address: address, l2Symbol: '', l2Decimals: '', l2Loading: false } : t
-    ))
-    
-    // Simulate fetching token info
-    if (address.length === 42 && address.startsWith('0x')) {
-      setTokenSets(prev => prev.map(t => 
-        t.id === id ? { ...t, l2Loading: true } : t
-      ))
-      
-      const mockTokens = {
-        '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48': { symbol: 'USDC', decimals: '6' },
-        '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913': { symbol: 'USDC', decimals: '6' },
-        '0xdAC17F958D2ee523a2206206994597C13D831ec7': { symbol: 'USDT', decimals: '6' },
-        '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2': { symbol: 'USDT', decimals: '6' },
-        '0x4200000000000000000000000000000000000006': { symbol: 'WETH', decimals: '18' },
-        '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2': { symbol: 'WETH', decimals: '18' },
-        '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599': { symbol: 'WBTC', decimals: '8' },
-      }
-      
-      setTimeout(() => {
-        const tokenInfo = mockTokens[address] || { symbol: 'TOKEN', decimals: '18' }
-        setTokenSets(prev => prev.map(t => 
-          t.id === id ? { ...t, l2Symbol: tokenInfo.symbol, l2Decimals: tokenInfo.decimals, l2Loading: false } : t
-        ))
-      }, 1500)
-    }
-  }
-
-  const copyAddress = (address) => {
-    navigator.clipboard.writeText(address)
-  }
+  // Check if form is complete
+  const isFormComplete = walletAddress && 
+    formData.chainName && 
+    formData.chainId && 
+    formData.rpcUrl && 
+    formData.rollupStack && 
+    formData.parentChain && 
+    formData.hubChain &&
+    formData.notificationEmail
 
   const renderChainIcon = (chainId) => {
     const IconComponent = ChainIcons[chainId]
     return IconComponent ? <IconComponent /> : null
+  }
+
+  // Request Submitted Screen
+  if (requestSubmitted) {
+    return (
+      <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8" style={{ background: 'var(--oz-bg)' }}>
+        <div className="max-w-2xl mx-auto">
+          <div className="oz-card p-8 text-center animate-fade-in">
+            <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
+              style={{ background: 'var(--oz-blue-light)' }}>
+              <Mail className="w-10 h-10" style={{ color: 'var(--oz-blue)' }} />
+            </div>
+            <h2 className="text-3xl font-bold mb-3 gradient-text">Request Submitted!</h2>
+            <p className="mb-8 max-w-md mx-auto" style={{ color: 'var(--oz-text-muted)' }}>
+              Your solver deployment request has been submitted to the OpenZeppelin team for review.
+            </p>
+            
+            {/* Expected timeline */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full oz-card mb-8">
+              <Clock className="w-4 h-4" style={{ color: 'var(--oz-blue)' }} />
+              <span className="text-sm" style={{ color: 'var(--oz-text-muted)' }}>
+                Expected review time: <span className="font-medium" style={{ color: 'var(--oz-text)' }}>1-2 business days</span>
+              </span>
+            </div>
+
+            {/* Summary */}
+            <div className="p-6 rounded-xl text-left mb-8" style={{ background: 'var(--oz-surface)', border: '1px solid var(--oz-border)' }}>
+              <h3 className="font-medium mb-4 text-center" style={{ color: 'var(--oz-text)' }}>Request Summary</h3>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span style={{ color: 'var(--oz-text-muted)' }}>Network</span>
+                  <span className="font-medium" style={{ color: 'var(--oz-text)' }}>{formData.chainName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span style={{ color: 'var(--oz-text-muted)' }}>Chain ID</span>
+                  <span className="font-mono" style={{ color: 'var(--oz-text)' }}>{formData.chainId}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span style={{ color: 'var(--oz-text-muted)' }}>Rollup Stack</span>
+                  <span className="flex items-center gap-2">
+                    {formData.rollupStack && (
+                      <span 
+                        className="w-2 h-2 rounded-full" 
+                        style={{ background: rollupStacks.find(s => s.id === formData.rollupStack)?.color }}
+                      />
+                    )}
+                    <span style={{ color: 'var(--oz-text)' }}>
+                      {rollupStacks.find(s => s.id === formData.rollupStack)?.name}
+                    </span>
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span style={{ color: 'var(--oz-text-muted)' }}>Parent (L1)</span>
+                  <span className="flex items-center gap-2">
+                    {formData.parentChain && (
+                      <span className="w-5 h-5">{renderChainIcon(formData.parentChain)}</span>
+                    )}
+                    <span style={{ color: 'var(--oz-text)' }}>{parentNetworks.find(h => h.id === formData.parentChain)?.name}</span>
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span style={{ color: 'var(--oz-text-muted)' }}>HUB Chain</span>
+                  <span className="flex items-center gap-2">
+                    {formData.hubChain && (
+                      <span className="w-5 h-5">{renderChainIcon(formData.hubChain)}</span>
+                    )}
+                    <span style={{ color: 'var(--oz-text)' }}>{hubChains.find(h => h.id === formData.hubChain)?.name}</span>
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span style={{ color: 'var(--oz-text-muted)' }}>Owner Wallet</span>
+                  <code className="font-mono text-xs" style={{ color: 'var(--oz-text)' }}>
+                    {walletAddress?.slice(0, 10)}...{walletAddress?.slice(-6)}
+                  </code>
+                </div>
+                <div className="flex justify-between">
+                  <span style={{ color: 'var(--oz-text-muted)' }}>Status</span>
+                  <span className="flex items-center gap-2 text-amber-500">
+                    <span className="status-dot status-pending" />
+                    Pending Review
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* What happens next */}
+            <div className="p-4 rounded-xl mb-8 text-left" style={{ background: 'var(--oz-blue-light)', border: '1px solid rgba(78, 94, 228, 0.1)' }}>
+              <h4 className="font-medium mb-3 flex items-center gap-2" style={{ color: 'var(--oz-blue)' }}>
+                <Info className="w-4 h-4" />
+                What happens next?
+              </h4>
+              <ol className="space-y-2 text-sm list-decimal list-inside" style={{ color: 'var(--oz-text-muted)' }}>
+                <li>OpenZeppelin team reviews your configuration</li>
+                <li>Required contracts are deployed on your chain</li>
+                <li>Solver instance is created with a secure KMS signer</li>
+                <li>You'll receive an email notification when approved</li>
+                <li>Return to the dashboard to configure tokens and fund your solver</li>
+              </ol>
+            </div>
+
+            {/* Notification reminder */}
+            <div className="flex items-center justify-center gap-3 p-4 rounded-xl mb-8" 
+              style={{ background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              <Bell className="w-5 h-5 text-emerald-500" />
+              <span className="text-sm" style={{ color: 'var(--oz-text-muted)' }}>
+                We'll notify you at <span className="font-medium text-emerald-600">{formData.notificationEmail}</span> when your solver is ready
+              </span>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <a
+                href="/dashboard"
+                className="oz-btn-primary px-6 py-3 inline-flex items-center justify-center gap-2"
+              >
+                <Settings className="w-4 h-4" />
+                Go to Dashboard
+              </a>
+              <a
+                href="/"
+                className="oz-btn-secondary px-6 py-3 inline-flex items-center justify-center gap-2"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Back to Home
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -435,1166 +306,292 @@ export default function NewNetworkOnboarding() {
           </div>
           <h1 className="text-4xl font-bold mb-4" style={{ color: 'var(--oz-text)' }}>Onboard Your L2</h1>
           <p style={{ color: 'var(--oz-text-muted)' }} className="max-w-xl mx-auto">
-            Deploy OIF infrastructure and connect your chain to the intent-based bridging ecosystem.
+            Submit your chain details and we'll set up the OIF infrastructure for your network.
           </p>
         </div>
 
-        {/* Progress Steps */}
-        <div className="mb-12 overflow-x-auto pb-4">
-          <div className="flex items-center justify-between relative min-w-[600px]">
-            {/* Progress Line */}
-            <div className="absolute top-6 left-0 right-0 h-0.5" style={{ background: 'var(--oz-border)' }} />
-            <div 
-              className="absolute top-6 left-0 h-0.5 transition-all duration-500"
-              style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%`, background: 'var(--oz-blue)' }}
-            />
-            
-            {steps.map((step) => (
-              <div key={step.id} className="relative flex flex-col items-center">
-                <button
-                  onClick={() => !launchComplete && setCurrentStep(step.id)}
-                  disabled={launchComplete}
-                  className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all duration-300 z-10`}
-                  style={{
-                    background: step.id < currentStep || launchComplete 
-                      ? 'var(--oz-blue)' 
-                      : 'var(--oz-card)',
-                    borderColor: step.id <= currentStep || launchComplete 
-                      ? 'var(--oz-blue)' 
-                      : 'var(--oz-border)',
-                    color: step.id < currentStep || launchComplete 
-                      ? 'white' 
-                      : step.id === currentStep 
-                        ? 'var(--oz-blue)' 
-                        : 'var(--oz-text-muted)'
-                  }}
-                >
-                  {step.id < currentStep || launchComplete ? (
-                    <Check className="w-5 h-5" />
-                  ) : (
-                    <step.icon className="w-5 h-5" />
-                  )}
-                </button>
-                <span 
-                  className="mt-3 text-xs font-medium text-center whitespace-nowrap"
-                  style={{ color: step.id <= currentStep ? 'var(--oz-text)' : 'var(--oz-text-muted)' }}
-                >
-                  {step.title}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Step Content */}
+        {/* Main Form Card */}
         <div className="oz-card p-8">
-          {/* Step 1: Network Configuration */}
-          {currentStep === 1 && (
-            <div className="animate-fade-in">
-              <h2 className="text-2xl font-semibold mb-2" style={{ color: 'var(--oz-text)' }}>Network Configuration</h2>
-              <p style={{ color: 'var(--oz-text-muted)' }} className="mb-6">Provide details about your L2 chain and select a HUB for connectivity.</p>
-
-              {/* Trust Banner */}
-              <div className="flex items-start gap-4 p-4 rounded-xl mb-8" 
-                style={{ background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-                  style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
-                  <Shield className="w-5 h-5 text-emerald-500" />
-                </div>
-                <div>
-                  <h4 className="font-medium mb-1 text-emerald-600 dark:text-emerald-400">Reviewed by OpenZeppelin</h4>
-                  <p className="text-sm" style={{ color: 'var(--oz-text-muted)' }}>
-                    Every deployment request is reviewed by the OpenZeppelin team before your solver goes live. 
-                    We verify your configuration, deploy the required contracts, and ensure everything is set up 
-                    correctly for secure operation.
-                  </p>
-                </div>
+          <div className="animate-fade-in">
+            {/* Trust Banner */}
+            <div className="flex items-start gap-4 p-4 rounded-xl mb-8" 
+              style={{ background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
+                <Shield className="w-5 h-5 text-emerald-500" />
               </div>
-
-              {/* Wallet Connection */}
-              <div className="p-4 rounded-xl mb-8" style={{ background: 'var(--oz-surface)', border: '1px solid var(--oz-border)' }}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'var(--oz-blue-light)' }}>
-                      <Wallet className="w-5 h-5" style={{ color: 'var(--oz-blue)' }} />
-                    </div>
-                    <div>
-                      <div className="font-medium" style={{ color: 'var(--oz-text)' }}>Wallet Connection</div>
-                      <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>
-                        {walletAddress ? 'Connected' : 'Connect your wallet to continue'}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {walletAddress ? (
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: 'var(--oz-bg)', border: '1px solid var(--oz-border)' }}>
-                        <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                        <code className="text-sm font-mono" style={{ color: 'var(--oz-text)' }}>
-                          {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
-                        </code>
-                      </div>
-                      <button
-                        onClick={() => setWalletAddress(null)}
-                        className="p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-                      >
-                        <X className="w-4 h-4" style={{ color: 'var(--oz-text-muted)' }} />
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={connectWallet}
-                      disabled={walletConnecting}
-                      className="oz-btn-primary px-4 py-2 flex items-center gap-2 disabled:opacity-50"
-                    >
-                      {walletConnecting ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Connecting...
-                        </>
-                      ) : (
-                        <>
-                          <Wallet className="w-4 h-4" />
-                          Connect Wallet
-                        </>
-                      )}
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--oz-text)' }}>Chain Name</label>
-                    <input
-                      type="text"
-                      name="chainName"
-                      value={formData.chainName}
-                      onChange={handleInputChange}
-                      placeholder="e.g., My L2 Network"
-                      className="oz-input"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--oz-text)' }}>Chain ID</label>
-                    <input
-                      type="text"
-                      name="chainId"
-                      value={formData.chainId}
-                      onChange={handleInputChange}
-                      placeholder="e.g., 42161"
-                      className="oz-input"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--oz-text)' }}>RPC URL</label>
-                  <input
-                    type="text"
-                    name="rpcUrl"
-                    value={formData.rpcUrl}
-                    onChange={handleInputChange}
-                    placeholder="https://rpc.your-network.io"
-                    className="oz-input font-mono text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--oz-text)' }}>Block Explorer URL</label>
-                  <input
-                    type="text"
-                    name="explorerUrl"
-                    value={formData.explorerUrl}
-                    onChange={handleInputChange}
-                    placeholder="https://explorer.your-network.io"
-                    className="oz-input font-mono text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-3" style={{ color: 'var(--oz-text)' }}>Rollup Stack</label>
-                  <p className="text-sm mb-4" style={{ color: 'var(--oz-text-muted)' }}>
-                    Select the rollup framework your L2 is built on. This determines canonical bridge integration.
-                  </p>
-                  <div className="grid md:grid-cols-2 gap-3">
-                    {rollupStacks.map((stack) => (
-                      <button
-                        key={stack.id}
-                        onClick={() => setFormData({ ...formData, rollupStack: stack.id })}
-                        className="flex items-start gap-4 p-4 rounded-xl border transition-all text-left"
-                        style={{
-                          background: formData.rollupStack === stack.id ? `${stack.color}10` : 'var(--oz-surface)',
-                          borderColor: formData.rollupStack === stack.id ? stack.color : 'var(--oz-border)'
-                        }}
-                      >
-                        <div 
-                          className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                          style={{ background: `${stack.color}20` }}
-                        >
-                          {stack.id === 'op' ? (
-                            <svg viewBox="0 0 32 32" className="w-7 h-7">
-                              <circle cx="16" cy="16" r="16" fill={stack.color}/>
-                              <path fill="#FFF" d="M10.9 19.2c-1.5 0-2.7-.4-3.5-1.2-.8-.8-1.2-2-1.2-3.4 0-1 .2-1.9.6-2.7.4-.8 1-1.4 1.8-1.9.8-.4 1.7-.7 2.7-.7 1.4 0 2.5.4 3.3 1.2.8.8 1.2 1.9 1.2 3.3 0 1-.2 2-.6 2.8-.4.8-1 1.4-1.8 1.9-.8.5-1.6.7-2.5.7zm.2-2.1c.5 0 1-.2 1.3-.5.3-.3.6-.8.7-1.3.2-.6.2-1.1.2-1.7 0-.7-.2-1.2-.5-1.6-.3-.4-.8-.6-1.4-.6-.5 0-1 .2-1.3.5-.3.3-.6.8-.8 1.3-.2.6-.2 1.1-.2 1.7 0 .7.2 1.2.5 1.6.4.4.9.6 1.5.6zm7.4 1.9V10.6h2.3l.2 1.3c.3-.5.7-.9 1.2-1.1.5-.3 1-.4 1.6-.4.9 0 1.6.3 2.1.8.5.5.8 1.3.8 2.3V19h-2.6v-5c0-.5-.1-.9-.3-1.2-.2-.3-.6-.4-1-.4-.5 0-.9.2-1.2.5-.3.4-.5.9-.5 1.5V19h-2.6z"/>
-                            </svg>
-                          ) : (
-                            <svg viewBox="0 0 32 32" className="w-7 h-7">
-                              <g fill="none">
-                                <circle cx="16" cy="16" r="16" fill="#2D374B"/>
-                                <path fill={stack.color} d="M16.8 10.6l5.2 8.3-2.4 1.4-3.9-6.2-1.1 1.7 3.3 5.3-2.4 1.4-4.4-7z"/>
-                                <path fill="#FFF" d="M20.5 21.7l2.4-1.4.8 1.3-2.4 1.4zM11.3 21.7l-2.4-1.4-.8 1.3 2.4 1.4z"/>
-                                <path fill={stack.color} d="M15.2 10.6l-5.2 8.3 2.4 1.4 3.9-6.2 1.1 1.7-3.3 5.3 2.4 1.4 4.4-7z"/>
-                              </g>
-                            </svg>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium" style={{ color: 'var(--oz-text)' }}>{stack.name}</span>
-                            {formData.rollupStack === stack.id && (
-                              <Check className="w-4 h-4" style={{ color: stack.color }} />
-                            )}
-                          </div>
-                          <div className="text-xs mb-2" style={{ color: 'var(--oz-text-muted)' }}>{stack.description}</div>
-                          <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>
-                            <span className="opacity-60">Examples:</span> {stack.chains.slice(0, 3).join(', ')}
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-3" style={{ color: 'var(--oz-text)' }}>Parent Network (L1)</label>
-                  <p className="text-sm mb-4" style={{ color: 'var(--oz-text-muted)' }}>
-                    Select the parent chain that your L2 settles to. This is used for canonical bridge integration.
-                  </p>
-                  <div className="grid md:grid-cols-2 gap-3">
-                    {parentNetworks.map((chain) => (
-                      <button
-                        key={chain.id}
-                        onClick={() => setFormData({ ...formData, parentChain: chain.id })}
-                        className="flex items-center gap-4 p-4 rounded-xl border transition-all text-left"
-                        style={{
-                          background: formData.parentChain === chain.id ? 'rgba(16, 185, 129, 0.1)' : 'var(--oz-surface)',
-                          borderColor: formData.parentChain === chain.id ? 'var(--oz-success)' : 'var(--oz-border)'
-                        }}
-                      >
-                        <div className="flex-shrink-0">
-                          {renderChainIcon(chain.id)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate" style={{ color: 'var(--oz-text)' }}>{chain.name}</div>
-                          <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>{chain.type}</div>
-                        </div>
-                        {formData.parentChain === chain.id && (
-                          <Check className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-3" style={{ color: 'var(--oz-text)' }}>Select HUB Chain</label>
-                  <p className="text-sm mb-4" style={{ color: 'var(--oz-text-muted)' }}>
-                    Choose a HUB chain based on settlement speed and liquidity availability.
-                  </p>
-                  <div className="grid md:grid-cols-2 gap-3">
-                    {hubChains.map((chain) => (
-                      <button
-                        key={chain.id}
-                        onClick={() => setFormData({ ...formData, hubChain: chain.id })}
-                        className="flex items-center gap-4 p-4 rounded-xl border transition-all text-left"
-                        style={{
-                          background: formData.hubChain === chain.id ? 'var(--oz-blue-light)' : 'var(--oz-surface)',
-                          borderColor: formData.hubChain === chain.id ? 'var(--oz-blue)' : 'var(--oz-border)'
-                        }}
-                      >
-                        <div className="flex-shrink-0">
-                          {renderChainIcon(chain.id)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate" style={{ color: 'var(--oz-text)' }}>{chain.name}</div>
-                          <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>Settlement: {chain.settlementTime}</div>
-                        </div>
-                        {formData.hubChain === chain.id && (
-                          <Check className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--oz-blue)' }} />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+              <div>
+                <h4 className="font-medium mb-1 text-emerald-600 dark:text-emerald-400">Reviewed by OpenZeppelin</h4>
+                <p className="text-sm" style={{ color: 'var(--oz-text-muted)' }}>
+                  Every deployment request is reviewed by the OpenZeppelin team. We'll deploy the required contracts, 
+                  set up a secure KMS signer, and notify you when your solver is ready to configure.
+                </p>
               </div>
             </div>
-          )}
 
-          {/* Step 2: Solver Setup */}
-          {currentStep === 2 && (
-            <div className="animate-fade-in">
-              <h2 className="text-2xl font-semibold mb-2" style={{ color: 'var(--oz-text)' }}>Solver Configuration</h2>
-              <p style={{ color: 'var(--oz-text-muted)' }} className="mb-8">Configure the solver instance that will operate your bridge routes.</p>
-
-              <div className="space-y-6">
-                {/* AWS KMS Generation */}
-                <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--oz-text)' }}>Solver Execution Address</label>
-                  <p className="text-xs mb-3" style={{ color: 'var(--oz-text-muted)' }}>
-                    A secure AWS KMS signer is being generated for your solver instance.
-                  </p>
-                  
-                  <div className="p-4 rounded-xl" style={{ background: 'var(--oz-surface)', border: '1px solid var(--oz-border)' }}>
-                    {generatingKMS ? (
-                      <div className="flex items-center gap-3">
-                        <Loader2 className="w-5 h-5 animate-spin" style={{ color: 'var(--oz-blue)' }} />
-                        <div>
-                          <div className="font-medium" style={{ color: 'var(--oz-blue)' }}>Generating AWS KMS Signer...</div>
-                          <div className="text-xs mt-1" style={{ color: 'var(--oz-text-muted)' }}>
-                            Creating secure key pair for transaction signing
-                          </div>
-                        </div>
-                      </div>
-                    ) : kmsAddress ? (
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                          <div>
-                            <div className="text-xs mb-1" style={{ color: 'var(--oz-text-muted)' }}>Generated Address</div>
-                            <code className="font-mono text-sm" style={{ color: 'var(--oz-text)' }}>{kmsAddress}</code>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => copyAddress(kmsAddress)}
-                            className="p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-                          >
-                            <Copy className="w-4 h-4" style={{ color: 'var(--oz-text-muted)' }} />
-                          </button>
-                          <button
-                            onClick={() => { setKmsAddress(null); generateKMS(); }}
-                            className="p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-                          >
-                            <RefreshCw className="w-4 h-4" style={{ color: 'var(--oz-text-muted)' }} />
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={generateKMS}
-                        className="flex items-center gap-2 hover:underline"
-                        style={{ color: 'var(--oz-blue)' }}
-                      >
-                        <Plus className="w-4 h-4" />
-                        Generate KMS Signer
-                      </button>
-                    )}
+            {/* Wallet Connection */}
+            <div className="p-4 rounded-xl mb-8" style={{ background: 'var(--oz-surface)', border: '1px solid var(--oz-border)' }}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'var(--oz-blue-light)' }}>
+                    <Wallet className="w-5 h-5" style={{ color: 'var(--oz-blue)' }} />
                   </div>
-                </div>
-
-                {/* Multiple Notification Emails */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium" style={{ color: 'var(--oz-text)' }}>Notification Emails</label>
-                    <button
-                      onClick={addEmail}
-                      className="flex items-center gap-1.5 text-xs hover:underline"
-                      style={{ color: 'var(--oz-blue)' }}
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      Add Email
-                    </button>
-                  </div>
-                  <p className="text-xs mb-3" style={{ color: 'var(--oz-text-muted)' }}>
-                    Receive alerts about solver health, low liquidity, and important events.
-                  </p>
-                  
-                  <div className="space-y-3">
-                    {notificationEmails.map((email, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <input
-                          type="email"
-                          value={email}
-                          onChange={(e) => updateEmail(index, e.target.value)}
-                          placeholder="admin@yourchain.io"
-                          className="oz-input flex-1"
-                        />
-                        {notificationEmails.length > 1 && (
-                          <button
-                            onClick={() => removeEmail(index)}
-                            className="p-3 rounded-xl border hover:border-red-500/50 hover:bg-red-500/10 transition-colors"
-                            style={{ borderColor: 'var(--oz-border)' }}
-                          >
-                            <X className="w-4 h-4" style={{ color: 'var(--oz-text-muted)' }} />
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Backup Admin Address */}
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <label className="block text-sm font-medium" style={{ color: 'var(--oz-text)' }}>Backup Admin Address</label>
-                    <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'var(--oz-border)', color: 'var(--oz-text-muted)' }}>Optional</span>
-                  </div>
-                  <p className="text-xs mb-3" style={{ color: 'var(--oz-text-muted)' }}>
-                    This address will be approved to spend funds on behalf of the solver as a backup recovery mechanism.
-                  </p>
-                  <input
-                    type="text"
-                    name="backupAdminAddress"
-                    value={formData.backupAdminAddress}
-                    onChange={handleInputChange}
-                    placeholder="0x... (Recommended: multisig address)"
-                    className="oz-input font-mono text-sm"
-                  />
-                  <div className="flex items-start gap-2 mt-3 p-3 rounded-lg" style={{ background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-                    <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-medium" style={{ color: 'var(--oz-text)' }}>Wallet Connection</div>
                     <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>
-                      <span className="text-red-500 font-medium">Important:</span> Use a multisig wallet (e.g., Safe) controlled by trusted parties. 
-                      This address will have the ability to recover funds in case of emergency.
+                      {walletAddress ? 'Connected - This wallet will be the solver owner' : 'Connect your wallet to continue'}
                     </div>
                   </div>
                 </div>
-
-                {/* Solver Instance Preview */}
-                <div className="p-6 rounded-xl" style={{ background: 'var(--oz-surface)', border: '1px solid var(--oz-border)' }}>
-                  <h3 className="font-medium mb-4" style={{ color: 'var(--oz-text)' }}>Solver Instance Preview</h3>
-                  <div className="space-y-3 text-sm">
-                    <div className="flex justify-between">
-                      <span style={{ color: 'var(--oz-text-muted)' }}>Instance ID</span>
-                      <code className="font-mono" style={{ color: 'var(--oz-blue)' }}>solver-{formData.chainId || 'xxxxx'}</code>
-                    </div>
-                    <div className="flex justify-between">
-                      <span style={{ color: 'var(--oz-text-muted)' }}>Execution Address</span>
-                      {kmsAddress ? (
-                        <code className="font-mono text-emerald-500">{kmsAddress.slice(0, 10)}...{kmsAddress.slice(-6)}</code>
-                      ) : (
-                        <span className="flex items-center gap-2" style={{ color: 'var(--oz-text-muted)' }}>
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                          Generating...
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span style={{ color: 'var(--oz-text-muted)' }}>HUB Connection</span>
-                      <span className="flex items-center gap-2 text-emerald-500">
-                        {formData.hubChain && (
-                          <span className="w-5 h-5">{renderChainIcon(formData.hubChain)}</span>
-                        )}
-                        {hubChains.find(h => h.id === formData.hubChain)?.name || 'Not selected'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span style={{ color: 'var(--oz-text-muted)' }}>Notification Recipients</span>
-                      <span style={{ color: 'var(--oz-text)' }}>{notificationEmails.filter(e => e).length} email(s)</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span style={{ color: 'var(--oz-text-muted)' }}>Status</span>
-                      <span className="flex items-center gap-2">
-                        <span className="status-dot status-pending" />
-                        Awaiting configuration
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Warning */}
-                <div className="flex items-start gap-3 p-4 rounded-xl" style={{ background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
-                  <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm">
-                    <p className="font-medium text-amber-500 mb-1">Important</p>
-                    <p style={{ color: 'var(--oz-text-muted)' }}>
-                      The generated AWS KMS signer is unique to this solver instance. You'll need to 
-                      deposit initial funds to this address before the solver can be activated.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Step 3: Token Sets Configuration */}
-          {currentStep === 3 && (
-            <div className="animate-fade-in">
-              <h2 className="text-2xl font-semibold mb-2" style={{ color: 'var(--oz-text)' }}>Token Sets Configuration</h2>
-              <p style={{ color: 'var(--oz-text-muted)' }} className="mb-8">Configure the token sets that your solver will support for bridging (L1 → HUB → L2).</p>
-
-              {/* Token Sets List */}
-              {tokenSets.length > 0 && (
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-medium" style={{ color: 'var(--oz-text)' }}>Token Sets ({tokenSets.length})</h3>
-                    <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>
-                      {tokenSets.filter(s => s.l2Address && s.l2Symbol).length} of {tokenSets.length} configured
-                    </div>
-                  </div>
-                  
-                  {tokenSets.map((tokenSet) => {
-                    const isConfigured = tokenSet.l2Address && tokenSet.l2Symbol
-                    const isPending = !tokenSet.l2Address || !tokenSet.l2Symbol
-                    
-                    return (
-                      <div
-                        key={tokenSet.id}
-                        className="p-4 rounded-xl border transition-all"
-                        style={{
-                          background: isPending ? 'rgba(245, 158, 11, 0.05)' : 'var(--oz-surface)',
-                          borderColor: isPending ? 'rgba(245, 158, 11, 0.3)' : 'var(--oz-border)'
-                        }}
-                      >
-                        {isPending ? (
-                          /* Pending Configuration - Need L2 Address */
-                          <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm"
-                                  style={{ background: 'var(--oz-blue-light)', color: 'var(--oz-blue)' }}>
-                                  {tokenSet.hubSymbol.slice(0, 2)}
-                                </div>
-                                <div>
-                                  <div className="font-medium" style={{ color: 'var(--oz-text)' }}>{tokenSet.hubSymbol} Token Set</div>
-                                  <div className="text-xs text-amber-500 flex items-center gap-1">
-                                    <AlertCircle className="w-3 h-3" />
-                                    L2 address required
-                                  </div>
-                                </div>
-                              </div>
-                              <button
-                                onClick={() => removeTokenSet(tokenSet.id)}
-                                className="p-2 rounded-lg hover:bg-red-500/10 transition-colors"
-                                style={{ color: 'var(--oz-text-muted)' }}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                            
-                            <div className="grid md:grid-cols-3 gap-4">
-                              {/* L1 Token Info (Read-only) */}
-                              <div>
-                                <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--oz-text-muted)' }}>
-                                  {tokenSet.l1Symbol} Address on L1
-                                </label>
-                                <div className="px-3 py-2 rounded-lg font-mono text-xs"
-                                  style={{ background: 'var(--oz-bg)', border: '1px solid var(--oz-border)', color: 'var(--oz-text-muted)' }}>
-                                  {tokenSet.l1Address.slice(0, 10)}...{tokenSet.l1Address.slice(-6)}
-                                </div>
-                                <div className="flex items-center gap-1.5 mt-2 text-xs text-emerald-500">
-                                  <CheckCircle2 className="w-3 h-3" />
-                                  {tokenSet.l1Symbol} ({tokenSet.l1Decimals} decimals)
-                                </div>
-                              </div>
-
-                              {/* HUB Token Info (Read-only) */}
-                              <div>
-                                <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--oz-text-muted)' }}>
-                                  {tokenSet.hubSymbol} Address on HUB
-                                </label>
-                                <div className="px-3 py-2 rounded-lg font-mono text-xs"
-                                  style={{ background: 'var(--oz-bg)', border: '1px solid var(--oz-border)', color: 'var(--oz-text-muted)' }}>
-                                  {tokenSet.hubAddress.slice(0, 10)}...{tokenSet.hubAddress.slice(-6)}
-                                </div>
-                                <div className="flex items-center gap-1.5 mt-2 text-xs text-emerald-500">
-                                  <CheckCircle2 className="w-3 h-3" />
-                                  {tokenSet.hubSymbol} ({tokenSet.hubDecimals} decimals)
-                                </div>
-                              </div>
-
-                              {/* L2 Token Input */}
-                              <div>
-                                <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--oz-text-muted)' }}>
-                                  {tokenSet.hubSymbol} Address on Your L2
-                                </label>
-                                <input
-                                  type="text"
-                                  value={tokenSet.l2Address}
-                                  onChange={(e) => updateTokenSetL2Address(tokenSet.id, e.target.value)}
-                                  placeholder="0x... (Enter token address)"
-                                  className="oz-input font-mono text-xs"
-                                />
-                                {tokenSet.l2Loading ? (
-                                  <div className="flex items-center gap-1.5 mt-2 text-xs" style={{ color: 'var(--oz-text-muted)' }}>
-                                    <Loader2 className="w-3 h-3 animate-spin" style={{ color: 'var(--oz-blue)' }} />
-                                    Fetching token info...
-                                  </div>
-                                ) : tokenSet.l2Symbol ? (
-                                  <div className="flex items-center gap-1.5 mt-2 text-xs text-emerald-500">
-                                    <CheckCircle2 className="w-3 h-3" />
-                                    {tokenSet.l2Symbol} ({tokenSet.l2Decimals} decimals)
-                                  </div>
-                                ) : null}
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          /* Configured - Show normal display */
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                              {/* L1 Token Info */}
-                              <div className="text-center">
-                                <div className="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm mx-auto mb-1"
-                                  style={{ background: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6' }}>
-                                  {tokenSet.l1Symbol.slice(0, 2)}
-                                </div>
-                                <div className="text-xs font-medium" style={{ color: 'var(--oz-text)' }}>{tokenSet.l1Symbol}</div>
-                                <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>L1</div>
-                              </div>
-
-                              {/* Arrow */}
-                              <div className="flex items-center" style={{ color: 'var(--oz-text-muted)' }}>
-                                <div className="w-4 h-px" style={{ background: 'var(--oz-border)' }} />
-                                <span className="text-xs mx-1">→</span>
-                                <div className="w-4 h-px" style={{ background: 'var(--oz-border)' }} />
-                              </div>
-
-                              {/* HUB Token Info */}
-                              <div className="text-center">
-                                <div className="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm mx-auto mb-1"
-                                  style={{ background: 'var(--oz-blue-light)', color: 'var(--oz-blue)' }}>
-                                  {tokenSet.hubSymbol.slice(0, 2)}
-                                </div>
-                                <div className="text-xs font-medium" style={{ color: 'var(--oz-text)' }}>{tokenSet.hubSymbol}</div>
-                                <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>HUB</div>
-                              </div>
-
-                              {/* Arrow */}
-                              <div className="flex items-center" style={{ color: 'var(--oz-text-muted)' }}>
-                                <div className="w-4 h-px" style={{ background: 'var(--oz-border)' }} />
-                                <span className="text-xs mx-1">→</span>
-                                <div className="w-4 h-px" style={{ background: 'var(--oz-border)' }} />
-                              </div>
-
-                              {/* L2 Token Info */}
-                              <div className="text-center">
-                                <div className="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm mx-auto mb-1"
-                                  style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
-                                  {tokenSet.l2Symbol.slice(0, 2)}
-                                </div>
-                                <div className="text-xs font-medium" style={{ color: 'var(--oz-text)' }}>{tokenSet.l2Symbol}</div>
-                                <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>Your L2</div>
-                              </div>
-                            </div>
-
-                            {/* Addresses */}
-                            <div className="hidden lg:block text-xs font-mono" style={{ color: 'var(--oz-text-muted)' }}>
-                              <div>L1: {tokenSet.l1Address.slice(0, 8)}...{tokenSet.l1Address.slice(-4)}</div>
-                              <div>HUB: {tokenSet.hubAddress.slice(0, 8)}...{tokenSet.hubAddress.slice(-4)}</div>
-                              <div>L2: {tokenSet.l2Address.slice(0, 8)}...{tokenSet.l2Address.slice(-4)}</div>
-                            </div>
-
-                            {/* Delete Button */}
-                            <button
-                              onClick={() => removeTokenSet(tokenSet.id)}
-                              className="p-2 rounded-lg hover:bg-red-500/10 transition-colors"
-                              style={{ color: 'var(--oz-text-muted)' }}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-
-              {/* Add Token Set Form */}
-              <div className="p-6 rounded-xl" style={{ background: 'var(--oz-surface)', border: '1px solid var(--oz-border)' }}>
-                <h3 className="font-medium mb-4" style={{ color: 'var(--oz-text)' }}>Add New Token Set</h3>
                 
-                <div className="grid md:grid-cols-3 gap-6 mb-6">
-                  {/* L1 Token */}
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--oz-text)' }}>
-                      Token on {parentNetworks.find(p => p.id === formData.parentChain)?.name || 'L1'}
-                    </label>
-                    <input
-                      type="text"
-                      value={newTokenSet.l1Address}
-                      onChange={(e) => handleL1AddressChange(e.target.value)}
-                      placeholder="0x... (Token address)"
-                      className="oz-input font-mono text-sm mb-3"
-                    />
-                    
-                    {newTokenSet.l1Loading ? (
-                      <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--oz-text-muted)' }}>
-                        <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--oz-blue)' }} />
-                        Fetching token info...
-                      </div>
-                    ) : newTokenSet.l1Symbol ? (
-                      <div className="p-3 rounded-lg" style={{ background: 'var(--oz-bg)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-                        <div className="flex items-center gap-2 text-sm">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          <span className="font-medium" style={{ color: 'var(--oz-text)' }}>{newTokenSet.l1Symbol}</span>
-                          <span style={{ color: 'var(--oz-text-muted)' }}>({newTokenSet.l1Decimals} decimals)</span>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>
-                        Enter L1 token address
-                      </div>
-                    )}
-                  </div>
-
-                  {/* HUB Token */}
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--oz-text)' }}>
-                      Token on {hubChains.find(h => h.id === formData.hubChain)?.name || 'HUB Chain'}
-                    </label>
-                    <input
-                      type="text"
-                      value={newTokenSet.hubAddress}
-                      onChange={(e) => handleHubAddressChange(e.target.value)}
-                      placeholder="0x... (Token address)"
-                      className="oz-input font-mono text-sm mb-3"
-                    />
-                    
-                    {newTokenSet.hubLoading ? (
-                      <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--oz-text-muted)' }}>
-                        <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--oz-blue)' }} />
-                        Fetching token info...
-                      </div>
-                    ) : newTokenSet.hubSymbol ? (
-                      <div className="p-3 rounded-lg" style={{ background: 'var(--oz-bg)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-                        <div className="flex items-center gap-2 text-sm">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          <span className="font-medium" style={{ color: 'var(--oz-text)' }}>{newTokenSet.hubSymbol}</span>
-                          <span style={{ color: 'var(--oz-text-muted)' }}>({newTokenSet.hubDecimals} decimals)</span>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>
-                        Enter HUB token address
-                      </div>
-                    )}
-                  </div>
-
-                  {/* L2 Token */}
-                  <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--oz-text)' }}>
-                      Token on Your L2
-                    </label>
-                    <input
-                      type="text"
-                      value={newTokenSet.l2Address}
-                      onChange={(e) => handleL2AddressChange(e.target.value)}
-                      placeholder="0x... (Token address)"
-                      className="oz-input font-mono text-sm mb-3"
-                    />
-                    
-                    {newTokenSet.l2Loading ? (
-                      <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--oz-text-muted)' }}>
-                        <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--oz-blue)' }} />
-                        Fetching token info...
-                      </div>
-                    ) : newTokenSet.l2Symbol ? (
-                      <div className="p-3 rounded-lg" style={{ background: 'var(--oz-bg)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-                        <div className="flex items-center gap-2 text-sm">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                          <span className="font-medium" style={{ color: 'var(--oz-text)' }}>{newTokenSet.l2Symbol}</span>
-                          <span style={{ color: 'var(--oz-text-muted)' }}>({newTokenSet.l2Decimals} decimals)</span>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>
-                        Enter L2 token address
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <button
-                  onClick={addTokenSet}
-                  disabled={!newTokenSet.l1Symbol || !newTokenSet.hubSymbol || !newTokenSet.l2Symbol}
-                  className="w-full oz-btn-primary py-3 flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  <Plus className="w-5 h-5" />
-                  Add Token Set
-                </button>
-              </div>
-
-              {/* Info */}
-              <div className="flex items-start gap-3 p-4 rounded-xl mt-6" style={{ background: 'var(--oz-blue-light)', border: '1px solid rgba(78, 94, 228, 0.2)' }}>
-                <Info className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: 'var(--oz-blue)' }} />
-                <div className="text-sm" style={{ color: 'var(--oz-text-muted)' }}>
-                  <p className="font-medium mb-1" style={{ color: 'var(--oz-blue)' }}>Token Set Mapping</p>
-                  <p>
-                    Each token set maps the same token across L1, HUB, and your L2 chain. 
-                    The solver holds liquidity on HUB and L2 (not on L1). Token info is automatically fetched from chain RPCs.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Step 4: Fund & Launch */}
-          {currentStep === 4 && (
-            <div className="animate-fade-in">
-              {!launchComplete ? (
-                <>
-                  <h2 className="text-2xl font-semibold mb-2" style={{ color: 'var(--oz-text)' }}>Fund & Request Solver</h2>
-                  <p style={{ color: 'var(--oz-text-muted)' }} className="mb-8">Deposit initial liquidity and submit your solver request to the OpenZeppelin team.</p>
-
-                  {/* Deposit Address */}
-                  <div className="p-6 rounded-xl mb-6" style={{ background: 'var(--oz-surface)', border: '1px solid var(--oz-border)' }}>
-                    <h3 className="font-medium mb-4" style={{ color: 'var(--oz-text)' }}>Deposit Address (Solver KMS)</h3>
-                    <div className="flex items-center gap-3 p-3 rounded-lg" style={{ background: 'var(--oz-bg)', border: '1px solid var(--oz-border)' }}>
-                      <code className="flex-1 font-mono text-sm break-all" style={{ color: 'var(--oz-text)' }}>
-                        {kmsAddress || 'Generating...'}
+                {walletAddress ? (
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: 'var(--oz-bg)', border: '1px solid var(--oz-border)' }}>
+                      <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                      <code className="text-sm font-mono" style={{ color: 'var(--oz-text)' }}>
+                        {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
                       </code>
-                      {kmsAddress && (
-                        <button 
-                          onClick={() => copyAddress(kmsAddress)}
-                          className="p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-                        >
-                          <Copy className="w-4 h-4" style={{ color: 'var(--oz-text-muted)' }} />
-                        </button>
-                      )}
                     </div>
-                    <p className="text-xs mt-3" style={{ color: 'var(--oz-text-muted)' }}>
-                      Deposit funds to this address on both your L2 chain and the HUB chain.
-                    </p>
                   </div>
-
-                  {/* Liquidity Requirements - Split by Network */}
-                  <div className="space-y-4 mb-8">
-                    <h3 className="font-medium" style={{ color: 'var(--oz-text)' }}>Required Deposits</h3>
-                    
-                    {/* Your L2 Network */}
-                    <div className="p-4 rounded-xl" style={{ background: 'var(--oz-surface)', border: '1px solid var(--oz-border)' }}>
-                      <div className="flex items-center gap-3 mb-4 pb-3" style={{ borderBottom: '1px solid var(--oz-border)' }}>
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
-                          <Layers className="w-4 h-4 text-emerald-500" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-medium" style={{ color: 'var(--oz-text)' }}>Your L2 Network</div>
-                          <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>{formData.chainName || 'New L2'}</div>
-                        </div>
-                        {depositsVerified && (
-                          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
-                            style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            Verified
-                          </span>
-                        )}
-                      </div>
-                      
-                      <div className="space-y-3">
-                        {/* ETH for gas */}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            {verifyingDeposits ? (
-                              <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--oz-blue)' }} />
-                            ) : depositProgress.eth === 100 ? (
-                              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                            ) : (
-                              <Circle className="w-4 h-4" style={{ color: 'var(--oz-text-muted)' }} />
-                            )}
-                            <span className="text-sm" style={{ color: 'var(--oz-text)' }}>ETH (Gas)</span>
-                          </div>
-                          <span className="text-sm font-mono" style={{ color: 'var(--oz-text)' }}>0.5 ETH</span>
-                        </div>
-                        
-                        {/* Token liquidity on L2 */}
-                        {tokenSets.filter(s => s.l2Symbol).map(tokenSet => (
-                          <div key={`l2-${tokenSet.id}`} className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              {verifyingDeposits ? (
-                                <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--oz-blue)' }} />
-                              ) : depositProgress.tokens === 100 ? (
-                                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                              ) : (
-                                <Circle className="w-4 h-4" style={{ color: 'var(--oz-text-muted)' }} />
-                              )}
-                              <span className="text-sm" style={{ color: 'var(--oz-text)' }}>{tokenSet.l2Symbol}</span>
-                            </div>
-                            <span className="text-sm font-mono" style={{ color: 'var(--oz-text)' }}>1,000 {tokenSet.l2Symbol}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* HUB Network */}
-                    <div className="p-4 rounded-xl" style={{ background: 'var(--oz-surface)', border: '1px solid var(--oz-border)' }}>
-                      <div className="flex items-center gap-3 mb-4 pb-3" style={{ borderBottom: '1px solid var(--oz-border)' }}>
-                        {formData.hubChain && (
-                          <div className="w-8 h-8 flex items-center justify-center">
-                            {renderChainIcon(formData.hubChain)}
-                          </div>
-                        )}
-                        <div className="flex-1">
-                          <div className="font-medium" style={{ color: 'var(--oz-text)' }}>HUB Network</div>
-                          <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>
-                            {hubChains.find(h => h.id === formData.hubChain)?.name || 'HUB Chain'}
-                          </div>
-                        </div>
-                        {depositsVerified && (
-                          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
-                            style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            Verified
-                          </span>
-                        )}
-                      </div>
-                      
-                      <div className="space-y-3">
-                        {/* ETH for gas on HUB */}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            {verifyingDeposits ? (
-                              <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--oz-blue)' }} />
-                            ) : depositProgress.eth === 100 ? (
-                              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                            ) : (
-                              <Circle className="w-4 h-4" style={{ color: 'var(--oz-text-muted)' }} />
-                            )}
-                            <span className="text-sm" style={{ color: 'var(--oz-text)' }}>ETH (Gas)</span>
-                          </div>
-                          <span className="text-sm font-mono" style={{ color: 'var(--oz-text)' }}>0.5 ETH</span>
-                        </div>
-                        
-                        {/* Token liquidity on HUB */}
-                        {tokenSets.filter(s => s.l2Symbol).map(tokenSet => (
-                          <div key={`hub-${tokenSet.id}`} className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              {verifyingDeposits ? (
-                                <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--oz-blue)' }} />
-                              ) : depositProgress.tokens === 100 ? (
-                                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                              ) : (
-                                <Circle className="w-4 h-4" style={{ color: 'var(--oz-text-muted)' }} />
-                              )}
-                              <span className="text-sm" style={{ color: 'var(--oz-text)' }}>{tokenSet.hubSymbol}</span>
-                            </div>
-                            <span className="text-sm font-mono" style={{ color: 'var(--oz-text)' }}>1,000 {tokenSet.hubSymbol}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Unconfigured tokens warning */}
-                    {tokenSets.some(s => !s.l2Symbol) && (
-                      <div className="flex items-start gap-3 p-4 rounded-xl" style={{ background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
-                        <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                        <div className="text-sm">
-                          <p className="font-medium text-amber-500 mb-1">Token Configuration Incomplete</p>
-                          <p style={{ color: 'var(--oz-text-muted)' }}>
-                            {tokenSets.filter(s => !s.l2Symbol).map(s => s.hubSymbol).join(', ')} token set(s) missing L2 addresses. 
-                            Go back to configure them.
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Action Buttons */}
-                  {!depositsVerified ? (
-                    <button
-                      onClick={verifyDeposits}
-                      disabled={verifyingDeposits}
-                      className="w-full oz-btn-primary py-4 flex items-center justify-center gap-2 disabled:opacity-50"
-                    >
-                      {verifyingDeposits ? (
-                        <>
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                          Checking balances...
-                        </>
-                      ) : (
-                        <>
-                          <RefreshCw className="w-5 h-5" />
-                          Verify Deposits
-                        </>
-                      )}
-                    </button>
-                  ) : (
-                    <button
-                      onClick={launchSolver}
-                      disabled={isSubmittingRequest}
-                      className="w-full py-4 rounded-xl font-semibold text-white transition-all flex items-center justify-center gap-2 glow-blue disabled:opacity-50"
-                      style={{ background: 'linear-gradient(to right, var(--oz-blue), #6366f1)' }}
-                    >
-                      {isSubmittingRequest ? (
-                        <>
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                          Submitting Request...
-                        </>
-                      ) : (
-                        <>
-                          <Send className="w-5 h-5" />
-                          Request Solver Deployment
-                        </>
-                      )}
-                    </button>
-                  )}
-
-                  {/* Status Info */}
-                  <div className="mt-8 p-6 rounded-xl" style={{ border: '2px dashed var(--oz-border)' }}>
-                    {depositsVerified ? (
-                      <div className="text-center">
-                        <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
-                        <h3 className="font-medium mb-2 text-emerald-500">Deposits Verified!</h3>
-                        <p className="text-sm" style={{ color: 'var(--oz-text-muted)' }}>
-                          Click "Request Solver Deployment" to notify the OpenZeppelin team. 
-                          They will review and spin up your solver instance.
-                        </p>
-                      </div>
+                ) : (
+                  <button
+                    onClick={connectWallet}
+                    disabled={walletConnecting}
+                    className="oz-btn-primary px-4 py-2 flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {walletConnecting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Connecting...
+                      </>
                     ) : (
-                      <div className="text-center">
-                        <Circle className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--oz-text-muted)' }} />
-                        <h3 className="font-medium mb-2" style={{ color: 'var(--oz-text)' }}>Awaiting Verification</h3>
-                        <p className="text-sm" style={{ color: 'var(--oz-text-muted)' }}>
-                          Deposit the required funds to the KMS address above, then click "Verify Deposits".
-                        </p>
-                      </div>
+                      <>
+                        <Wallet className="w-4 h-4" />
+                        Connect Wallet
+                      </>
                     )}
-                  </div>
-                </>
-              ) : (
-                /* Request Submitted State */
-                <div className="text-center py-8 animate-fade-in">
-                  <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
-                    style={{ background: 'var(--oz-blue-light)' }}>
-                    <Mail className="w-10 h-10" style={{ color: 'var(--oz-blue)' }} />
-                  </div>
-                  <h2 className="text-3xl font-bold mb-3 gradient-text">Request Submitted!</h2>
-                  <p className="mb-8 max-w-md mx-auto" style={{ color: 'var(--oz-text-muted)' }}>
-                    The OpenZeppelin team has been notified and will spin up your solver instance shortly.
-                  </p>
-                  
-                  {/* Expected timeline */}
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full oz-card mb-8">
-                    <Clock className="w-4 h-4" style={{ color: 'var(--oz-blue)' }} />
-                    <span className="text-sm" style={{ color: 'var(--oz-text-muted)' }}>Expected setup time: <span className="font-medium" style={{ color: 'var(--oz-text)' }}>1-2 business days</span></span>
-                  </div>
+                  </button>
+                )}
+              </div>
+            </div>
 
-                  {/* Summary */}
-                  <div className="p-6 rounded-xl text-left mb-8" style={{ background: 'var(--oz-surface)', border: '1px solid var(--oz-border)' }}>
-                    <h3 className="font-medium mb-4 text-center" style={{ color: 'var(--oz-text)' }}>Deployment Summary</h3>
-                    <div className="space-y-3 text-sm">
-                      <div className="flex justify-between">
-                        <span style={{ color: 'var(--oz-text-muted)' }}>Network</span>
-                        <span className="font-medium" style={{ color: 'var(--oz-text)' }}>{formData.chainName || 'My L2 Network'}</span>
+            <h2 className="text-2xl font-semibold mb-2" style={{ color: 'var(--oz-text)' }}>Network Details</h2>
+            <p style={{ color: 'var(--oz-text-muted)' }} className="mb-6">Provide information about your L2 chain.</p>
+
+            <div className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--oz-text)' }}>Chain Name *</label>
+                  <input
+                    type="text"
+                    name="chainName"
+                    value={formData.chainName}
+                    onChange={handleInputChange}
+                    placeholder="e.g., My L2 Network"
+                    className="oz-input"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: 'var(--oz-text)' }}>Chain ID *</label>
+                  <input
+                    type="text"
+                    name="chainId"
+                    value={formData.chainId}
+                    onChange={handleInputChange}
+                    placeholder="e.g., 42161"
+                    className="oz-input"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--oz-text)' }}>RPC URL *</label>
+                <input
+                  type="text"
+                  name="rpcUrl"
+                  value={formData.rpcUrl}
+                  onChange={handleInputChange}
+                  placeholder="https://rpc.your-network.io"
+                  className="oz-input font-mono text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--oz-text)' }}>Block Explorer URL</label>
+                <input
+                  type="text"
+                  name="explorerUrl"
+                  value={formData.explorerUrl}
+                  onChange={handleInputChange}
+                  placeholder="https://explorer.your-network.io"
+                  className="oz-input font-mono text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-3" style={{ color: 'var(--oz-text)' }}>Rollup Stack *</label>
+                <p className="text-sm mb-4" style={{ color: 'var(--oz-text-muted)' }}>
+                  Select the rollup framework your L2 is built on.
+                </p>
+                <div className="grid md:grid-cols-2 gap-3">
+                  {rollupStacks.map((stack) => (
+                    <button
+                      key={stack.id}
+                      onClick={() => setFormData({ ...formData, rollupStack: stack.id })}
+                      className="flex items-start gap-4 p-4 rounded-xl border transition-all text-left"
+                      style={{
+                        background: formData.rollupStack === stack.id ? `${stack.color}10` : 'var(--oz-surface)',
+                        borderColor: formData.rollupStack === stack.id ? stack.color : 'var(--oz-border)'
+                      }}
+                    >
+                      <div 
+                        className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{ background: `${stack.color}20` }}
+                      >
+                        {stack.id === 'op' ? (
+                          <svg viewBox="0 0 32 32" className="w-7 h-7">
+                            <circle cx="16" cy="16" r="16" fill={stack.color}/>
+                            <path fill="#FFF" d="M10.9 19.2c-1.5 0-2.7-.4-3.5-1.2-.8-.8-1.2-2-1.2-3.4 0-1 .2-1.9.6-2.7.4-.8 1-1.4 1.8-1.9.8-.4 1.7-.7 2.7-.7 1.4 0 2.5.4 3.3 1.2.8.8 1.2 1.9 1.2 3.3 0 1-.2 2-.6 2.8-.4.8-1 1.4-1.8 1.9-.8.5-1.6.7-2.5.7zm.2-2.1c.5 0 1-.2 1.3-.5.3-.3.6-.8.7-1.3.2-.6.2-1.1.2-1.7 0-.7-.2-1.2-.5-1.6-.3-.4-.8-.6-1.4-.6-.5 0-1 .2-1.3.5-.3.3-.6.8-.8 1.3-.2.6-.2 1.1-.2 1.7 0 .7.2 1.2.5 1.6.4.4.9.6 1.5.6zm7.4 1.9V10.6h2.3l.2 1.3c.3-.5.7-.9 1.2-1.1.5-.3 1-.4 1.6-.4.9 0 1.6.3 2.1.8.5.5.8 1.3.8 2.3V19h-2.6v-5c0-.5-.1-.9-.3-1.2-.2-.3-.6-.4-1-.4-.5 0-.9.2-1.2.5-.3.4-.5.9-.5 1.5V19h-2.6z"/>
+                          </svg>
+                        ) : (
+                          <svg viewBox="0 0 32 32" className="w-7 h-7">
+                            <g fill="none">
+                              <circle cx="16" cy="16" r="16" fill="#2D374B"/>
+                              <path fill={stack.color} d="M16.8 10.6l5.2 8.3-2.4 1.4-3.9-6.2-1.1 1.7 3.3 5.3-2.4 1.4-4.4-7z"/>
+                              <path fill="#FFF" d="M20.5 21.7l2.4-1.4.8 1.3-2.4 1.4zM11.3 21.7l-2.4-1.4-.8 1.3 2.4 1.4z"/>
+                              <path fill={stack.color} d="M15.2 10.6l-5.2 8.3 2.4 1.4 3.9-6.2 1.1 1.7-3.3 5.3 2.4 1.4 4.4-7z"/>
+                            </g>
+                          </svg>
+                        )}
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span style={{ color: 'var(--oz-text-muted)' }}>Rollup Stack</span>
-                        <span className="flex items-center gap-2">
-                          {formData.rollupStack && (
-                            <span 
-                              className="w-2 h-2 rounded-full" 
-                              style={{ background: rollupStacks.find(s => s.id === formData.rollupStack)?.color }}
-                            />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-medium" style={{ color: 'var(--oz-text)' }}>{stack.name}</span>
+                          {formData.rollupStack === stack.id && (
+                            <Check className="w-4 h-4" style={{ color: stack.color }} />
                           )}
-                          <span style={{ color: 'var(--oz-text)' }}>
-                            {rollupStacks.find(s => s.id === formData.rollupStack)?.name || '—'}
-                          </span>
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span style={{ color: 'var(--oz-text-muted)' }}>Parent (L1)</span>
-                        <span className="flex items-center gap-2">
-                          {formData.parentChain && (
-                            <span className="w-5 h-5">{renderChainIcon(formData.parentChain)}</span>
-                          )}
-                          <span style={{ color: 'var(--oz-text)' }}>{parentNetworks.find(h => h.id === formData.parentChain)?.name || '—'}</span>
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span style={{ color: 'var(--oz-text-muted)' }}>HUB Chain</span>
-                        <span className="flex items-center gap-2">
-                          {formData.hubChain && (
-                            <span className="w-5 h-5">{renderChainIcon(formData.hubChain)}</span>
-                          )}
-                          <span style={{ color: 'var(--oz-text)' }}>{hubChains.find(h => h.id === formData.hubChain)?.name}</span>
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span style={{ color: 'var(--oz-text-muted)' }}>Solver Address</span>
-                        <code className="font-mono text-xs" style={{ color: 'var(--oz-text)' }}>{kmsAddress?.slice(0, 10)}...{kmsAddress?.slice(-6)}</code>
-                      </div>
-                      {formData.backupAdminAddress && (
-                        <div className="flex justify-between">
-                          <span style={{ color: 'var(--oz-text-muted)' }}>Backup Admin</span>
-                          <code className="font-mono text-xs" style={{ color: 'var(--oz-text)' }}>{formData.backupAdminAddress.slice(0, 10)}...{formData.backupAdminAddress.slice(-6)}</code>
                         </div>
+                        <div className="text-xs mb-2" style={{ color: 'var(--oz-text-muted)' }}>{stack.description}</div>
+                        <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>
+                          <span className="opacity-60">Examples:</span> {stack.chains.slice(0, 3).join(', ')}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-3" style={{ color: 'var(--oz-text)' }}>Parent Network (L1) *</label>
+                <p className="text-sm mb-4" style={{ color: 'var(--oz-text-muted)' }}>
+                  Select the parent chain that your L2 settles to.
+                </p>
+                <div className="grid md:grid-cols-2 gap-3">
+                  {parentNetworks.map((chain) => (
+                    <button
+                      key={chain.id}
+                      onClick={() => setFormData({ ...formData, parentChain: chain.id })}
+                      className="flex items-center gap-4 p-4 rounded-xl border transition-all text-left"
+                      style={{
+                        background: formData.parentChain === chain.id ? 'rgba(16, 185, 129, 0.1)' : 'var(--oz-surface)',
+                        borderColor: formData.parentChain === chain.id ? 'var(--oz-success)' : 'var(--oz-border)'
+                      }}
+                    >
+                      <div className="flex-shrink-0">
+                        {renderChainIcon(chain.id)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate" style={{ color: 'var(--oz-text)' }}>{chain.name}</div>
+                        <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>{chain.type}</div>
+                      </div>
+                      {formData.parentChain === chain.id && (
+                        <Check className="w-5 h-5 text-emerald-500 flex-shrink-0" />
                       )}
-                      <div className="flex justify-between">
-                        <span style={{ color: 'var(--oz-text-muted)' }}>Token Sets</span>
-                        <span style={{ color: 'var(--oz-text)' }}>{tokenSets.filter(s => s.l2Symbol).length} configured</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span style={{ color: 'var(--oz-text-muted)' }}>Notifications</span>
-                        <span style={{ color: 'var(--oz-text)' }}>{notificationEmails.filter(e => e).length} recipient(s)</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span style={{ color: 'var(--oz-text-muted)' }}>Status</span>
-                        <span className="flex items-center gap-2 text-amber-500">
-                          <span className="status-dot status-pending" />
-                          Pending Review
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-                  {/* What happens next */}
-                  <div className="p-4 rounded-xl mb-8 text-left" style={{ background: 'var(--oz-blue-light)', border: '1px solid rgba(78, 94, 228, 0.1)' }}>
-                    <h4 className="font-medium mb-3 flex items-center gap-2" style={{ color: 'var(--oz-blue)' }}>
-                      <Info className="w-4 h-4" />
-                      What happens next?
-                    </h4>
-                    <ol className="space-y-2 text-sm list-decimal list-inside" style={{ color: 'var(--oz-text-muted)' }}>
-                      <li>OpenZeppelin team reviews your configuration</li>
-                      <li>Required contracts are deployed on your chain (OIF Settlement, Fast Fill Router, Broadcaster Oracle, Token Registry)</li>
-                      <li>Solver instance is spun up with your KMS signer</li>
-                      <li>You'll receive an email notification when ready</li>
-                      <li>Access the dashboard to manage your solver</li>
-                    </ol>
-                  </div>
+              <div>
+                <label className="block text-sm font-medium mb-3" style={{ color: 'var(--oz-text)' }}>Select HUB Chain *</label>
+                <p className="text-sm mb-4" style={{ color: 'var(--oz-text-muted)' }}>
+                  Choose a HUB chain based on settlement speed and liquidity availability.
+                </p>
+                <div className="grid md:grid-cols-2 gap-3">
+                  {hubChains.map((chain) => (
+                    <button
+                      key={chain.id}
+                      onClick={() => setFormData({ ...formData, hubChain: chain.id })}
+                      className="flex items-center gap-4 p-4 rounded-xl border transition-all text-left"
+                      style={{
+                        background: formData.hubChain === chain.id ? 'var(--oz-blue-light)' : 'var(--oz-surface)',
+                        borderColor: formData.hubChain === chain.id ? 'var(--oz-blue)' : 'var(--oz-border)'
+                      }}
+                    >
+                      <div className="flex-shrink-0">
+                        {renderChainIcon(chain.id)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate" style={{ color: 'var(--oz-text)' }}>{chain.name}</div>
+                        <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>Settlement: {chain.settlementTime}</div>
+                      </div>
+                      {formData.hubChain === chain.id && (
+                        <Check className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--oz-blue)' }} />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <a
-                      href="/dashboard"
-                      className="oz-btn-primary px-6 py-3 inline-flex items-center justify-center gap-2"
-                    >
-                      <Settings className="w-4 h-4" />
-                      Go to Dashboard
-                    </a>
-                    <a
-                      href="/"
-                      className="oz-btn-secondary px-6 py-3 inline-flex items-center justify-center gap-2"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      Back to Home
-                    </a>
+              {/* Notification Email */}
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--oz-text)' }}>Notification Email *</label>
+                <p className="text-xs mb-3" style={{ color: 'var(--oz-text-muted)' }}>
+                  We'll notify you at this email when your solver is ready for configuration.
+                </p>
+                <input
+                  type="email"
+                  name="notificationEmail"
+                  value={formData.notificationEmail}
+                  onChange={handleInputChange}
+                  placeholder="admin@yourchain.io"
+                  className="oz-input"
+                />
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <div className="mt-8 pt-6" style={{ borderTop: '1px solid var(--oz-border)' }}>
+              {!isFormComplete && (
+                <div className="flex items-start gap-3 p-4 rounded-xl mb-6" 
+                  style={{ background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+                  <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm" style={{ color: 'var(--oz-text-muted)' }}>
+                    Please fill in all required fields and connect your wallet to submit.
                   </div>
                 </div>
               )}
-            </div>
-          )}
-
-          {/* Navigation Buttons */}
-          {!launchComplete && (
-            <div className="flex items-center justify-between mt-8 pt-6" style={{ borderTop: '1px solid var(--oz-border)' }}>
+              
               <button
-                onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
-                disabled={currentStep === 1}
-                className="oz-btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={submitRequest}
+                disabled={!isFormComplete || isSubmitting}
+                className="w-full py-4 rounded-xl font-semibold text-white transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed glow-blue"
+                style={{ background: 'linear-gradient(to right, var(--oz-blue), #6366f1)' }}
               >
-                Back
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Submitting Request...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-5 h-5" />
+                    Submit Deployment Request
+                  </>
+                )}
               </button>
-              {currentStep !== 4 && (
-                <button
-                  onClick={() => setCurrentStep(Math.min(4, currentStep + 1))}
-                  className="oz-btn-primary flex items-center gap-2"
-                >
-                  Continue
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>

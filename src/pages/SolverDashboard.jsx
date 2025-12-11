@@ -15,7 +15,11 @@ import {
   ArrowRightLeft,
   Loader2,
   ArrowRight,
-  Shield
+  Shield,
+  Key,
+  Coins,
+  Sparkles,
+  ChevronRight
 } from 'lucide-react'
 
 // Token sets include L1, HUB, and L2 addresses (solver only holds liquidity on HUB and L2)
@@ -55,6 +59,13 @@ const mockTokens = [
   },
 ]
 
+// Available tokens for configuration (common tokens with known HUB addresses)
+const availableTokensForSetup = [
+  { name: 'USD Coin', symbol: 'USDC', l1Address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', hubChainAddress: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' },
+  { name: 'Ethereum', symbol: 'ETH', l1Address: '0x0000000000000000000000000000000000000000', hubChainAddress: '0x4200000000000000000000000000000000000006' },
+  { name: 'Tether USD', symbol: 'USDT', l1Address: '0xdAC17F958D2ee523a2206206994597C13D831ec7', hubChainAddress: '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2' },
+]
+
 const stats = [
   { label: 'Total Volume (24h)', value: '$1.2M', change: '+12.5%', positive: true, icon: TrendingUp },
   { label: 'Intents (24h)', value: '156', change: '+23', positive: true, icon: Activity },
@@ -71,6 +82,19 @@ export default function SolverDashboard() {
   const [isConnected, setIsConnected] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
   const [connectedAddress, setConnectedAddress] = useState('')
+  
+  // New solver setup flow state
+  const [isNewSolverFlow, setIsNewSolverFlow] = useState(false)
+  const [setupStep, setSetupStep] = useState('tokens') // 'tokens', 'funding', 'complete'
+  const [selectedTokensForSetup, setSelectedTokensForSetup] = useState([]) // { ...token, l2Address: '' }
+  const [isVerifyingDeposits, setIsVerifyingDeposits] = useState(false)
+  const [depositsVerified, setDepositsVerified] = useState(false)
+  const [verifiedBalances, setVerifiedBalances] = useState([]) // balances after verification
+  const [showAddCustomToken, setShowAddCustomToken] = useState(false)
+  const [customToken, setCustomToken] = useState({ name: '', symbol: '', l1Address: '', hubChainAddress: '', l2Address: '' })
+  
+  // KMS address (provided by OZ)
+  const kmsAddress = '0x9Fe46736679d2D9a65F0992F2272dE9f3c7fa6e0'
   
   // Dashboard state
   const [tokens, setTokens] = useState(mockTokens)
@@ -101,14 +125,106 @@ export default function SolverDashboard() {
     l2Address: '',
   })
 
-  // Connect wallet handler
+  // Connect wallet handler (existing solver)
   const connectWallet = () => {
     setIsConnecting(true)
     setTimeout(() => {
       setIsConnecting(false)
       setIsConnected(true)
+      setIsNewSolverFlow(false)
       setConnectedAddress('0x742d35Cc6634C0532925a3b844Bc9e7595f2bD73')
     }, 1000)
+  }
+
+  // Connect wallet for new solver setup
+  const connectWalletNewSolver = () => {
+    setIsConnecting(true)
+    setTimeout(() => {
+      setIsConnecting(false)
+      setIsConnected(true)
+      setIsNewSolverFlow(true)
+      setSetupStep('tokens')
+      setConnectedAddress('0x742d35Cc6634C0532925a3b844Bc9e7595f2bD73')
+    }, 1000)
+  }
+
+  // Toggle token selection for setup
+  const toggleTokenForSetup = (token) => {
+    setSelectedTokensForSetup(prev => {
+      const exists = prev.find(t => t.symbol === token.symbol)
+      if (exists) {
+        return prev.filter(t => t.symbol !== token.symbol)
+      } else {
+        // Add with empty L2 address that user needs to fill
+        return [...prev, { ...token, l2Address: '' }]
+      }
+    })
+  }
+
+  // Update L2 address for a selected token
+  const updateTokenL2Address = (symbol, l2Address) => {
+    setSelectedTokensForSetup(prev => 
+      prev.map(t => t.symbol === symbol ? { ...t, l2Address } : t)
+    )
+  }
+
+  // Add custom token
+  const addCustomToken = () => {
+    if (customToken.name && customToken.symbol && customToken.hubChainAddress) {
+      setSelectedTokensForSetup(prev => [...prev, { ...customToken, isCustom: true }])
+      setCustomToken({ name: '', symbol: '', l1Address: '', hubChainAddress: '', l2Address: '' })
+      setShowAddCustomToken(false)
+    }
+  }
+
+  // Proceed to funding step
+  const proceedToFunding = () => {
+    setSetupStep('funding')
+  }
+
+  // Verify deposits
+  const verifyDeposits = () => {
+    setIsVerifyingDeposits(true)
+    setTimeout(() => {
+      // Generate mock balances for each token
+      const balances = selectedTokensForSetup.map(token => ({
+        ...token,
+        hubBalance: token.symbol === 'ETH' ? (Math.random() * 10).toFixed(4) : (Math.random() * 50000).toFixed(2),
+        l2Balance: token.symbol === 'ETH' ? (Math.random() * 5).toFixed(4) : (Math.random() * 25000).toFixed(2),
+      }))
+      setVerifiedBalances(balances)
+      setIsVerifyingDeposits(false)
+      setDepositsVerified(true)
+    }, 2000)
+  }
+
+  // Complete setup and go to dashboard
+  const completeSetup = () => {
+    // Convert verified tokens to the format used by the dashboard
+    const configuredTokens = verifiedBalances.map((token, index) => ({
+      id: index + 1,
+      name: token.name,
+      symbol: token.symbol,
+      l1Address: token.l1Address || '',
+      hubChainAddress: token.hubChainAddress,
+      l2Address: token.l2Address,
+      l2Balance: parseFloat(token.l2Balance) || 0,
+      hubChainBalance: parseFloat(token.hubBalance) || 0,
+      status: 'active',
+    }))
+    setTokens(configuredTokens)
+    resetSetupFlow()
+  }
+
+  // Reset setup flow state
+  const resetSetupFlow = () => {
+    setIsNewSolverFlow(false)
+    setSetupStep('tokens')
+    setSelectedTokensForSetup([])
+    setDepositsVerified(false)
+    setVerifiedBalances([])
+    setShowAddCustomToken(false)
+    setCustomToken({ name: '', symbol: '', l1Address: '', hubChainAddress: '', l2Address: '' })
   }
 
   const handleAddToken = () => {
@@ -202,7 +318,7 @@ export default function SolverDashboard() {
     navigator.clipboard.writeText(address)
   }
 
-  // Login Screen
+  // Login Screen with two options
   if (!isConnected) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 py-8" style={{ background: 'var(--oz-bg)' }}>
@@ -231,10 +347,11 @@ export default function SolverDashboard() {
               </div>
             </div>
 
+            {/* Existing Solver - Connect Wallet */}
             <button
               onClick={connectWallet}
               disabled={isConnecting}
-              className="w-full py-4 rounded-xl bg-gradient-to-r from-oz-blue to-oz-purple hover:opacity-90 disabled:opacity-70 text-white font-semibold transition-all flex items-center justify-center gap-3"
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-oz-blue to-oz-purple hover:opacity-90 disabled:opacity-70 text-white font-semibold transition-all flex items-center justify-center gap-3 mb-3"
             >
               {isConnecting ? (
                 <>
@@ -249,9 +366,512 @@ export default function SolverDashboard() {
               )}
             </button>
 
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t" style={{ borderColor: 'var(--oz-border)' }}></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2" style={{ background: 'var(--oz-card)', color: 'var(--oz-text-muted)' }}>or</span>
+              </div>
+            </div>
+
+            {/* New Solver - Setup Flow */}
+            <button
+              onClick={connectWalletNewSolver}
+              disabled={isConnecting}
+              className="w-full py-4 rounded-xl font-semibold transition-all flex items-center justify-center gap-3 oz-btn-secondary"
+            >
+              {isConnecting ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Connecting...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-5 h-5" />
+                  Setup New Solver
+                  <ChevronRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+
             <p className="text-xs text-center mt-4" style={{ color: 'var(--oz-text-muted)' }}>
-              Only authorized solver operators can access this dashboard.
+              Use "Setup New Solver" if your solver was recently approved by OpenZeppelin.
             </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // New Solver Setup Flow - Token Configuration
+  if (isNewSolverFlow && setupStep === 'tokens') {
+    return (
+      <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8" style={{ background: 'var(--oz-bg)' }}>
+        <div className="max-w-3xl mx-auto">
+          {/* Progress Steps */}
+          <div className="flex items-center justify-center mb-8">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-oz-blue to-oz-purple text-white text-sm font-semibold">1</div>
+                <span className="text-sm font-medium" style={{ color: 'var(--oz-text)' }}>Token Sets</span>
+              </div>
+              <div className="w-12 h-0.5" style={{ background: 'var(--oz-border)' }}></div>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold" style={{ background: 'var(--oz-surface)', color: 'var(--oz-text-muted)', border: '1px solid var(--oz-border)' }}>2</div>
+                <span className="text-sm" style={{ color: 'var(--oz-text-muted)' }}>Fund Solver</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="oz-card p-8">
+            {/* KMS Info Banner */}
+            <div className="flex items-start gap-4 p-4 rounded-xl mb-8" 
+              style={{ background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
+                <Key className="w-5 h-5 text-emerald-500" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-medium mb-1 text-emerald-600 dark:text-emerald-400">KMS Signer Ready</h4>
+                <p className="text-sm mb-2" style={{ color: 'var(--oz-text-muted)' }}>
+                  OpenZeppelin has set up a secure KMS signer for your solver.
+                </p>
+                <div className="flex items-center gap-2 p-2 rounded-lg" style={{ background: 'var(--oz-surface)' }}>
+                  <code className="text-xs font-mono flex-1" style={{ color: 'var(--oz-text)' }}>{kmsAddress}</code>
+                  <button onClick={() => copyAddress(kmsAddress)} className="p-1 hover:opacity-70 transition-opacity" style={{ color: 'var(--oz-text-muted)' }}>
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <h2 className="text-2xl font-semibold mb-2" style={{ color: 'var(--oz-text)' }}>Configure Token Sets</h2>
+            <p style={{ color: 'var(--oz-text-muted)' }} className="mb-6">
+              Select tokens and provide their contract addresses on your L2 chain.
+            </p>
+
+            {/* Available Common Tokens */}
+            <div className="mb-6">
+              <h3 className="text-sm font-medium mb-3" style={{ color: 'var(--oz-text)' }}>Common Tokens</h3>
+              <div className="flex flex-wrap gap-2">
+                {availableTokensForSetup.map((token) => {
+                  const isSelected = selectedTokensForSetup.find(t => t.symbol === token.symbol)
+                  return (
+                    <button
+                      key={token.symbol}
+                      onClick={() => toggleTokenForSetup(token)}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg border transition-all"
+                      style={{
+                        background: isSelected ? 'var(--oz-blue-light)' : 'var(--oz-surface)',
+                        borderColor: isSelected ? 'var(--oz-blue)' : 'var(--oz-border)'
+                      }}
+                    >
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center font-semibold text-xs" 
+                        style={{ background: isSelected ? 'var(--oz-blue)' : 'var(--oz-bg)', color: isSelected ? 'white' : 'var(--oz-blue)' }}>
+                        {token.symbol.slice(0, 2)}
+                      </div>
+                      <span className="text-sm font-medium" style={{ color: 'var(--oz-text)' }}>{token.symbol}</span>
+                      {isSelected && <CheckCircle2 className="w-4 h-4" style={{ color: 'var(--oz-blue)' }} />}
+                    </button>
+                  )
+                })}
+                <button
+                  onClick={() => setShowAddCustomToken(true)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg border transition-all hover:border-oz-blue"
+                  style={{ background: 'var(--oz-surface)', borderColor: 'var(--oz-border)' }}
+                >
+                  <Plus className="w-4 h-4" style={{ color: 'var(--oz-blue)' }} />
+                  <span className="text-sm font-medium" style={{ color: 'var(--oz-text)' }}>Custom Token</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Selected Tokens with L2 Address Input */}
+            {selectedTokensForSetup.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-sm font-medium mb-3" style={{ color: 'var(--oz-text)' }}>
+                  Configure L2 Addresses ({selectedTokensForSetup.length} tokens)
+                </h3>
+                <div className="space-y-3">
+                  {selectedTokensForSetup.map((token) => (
+                    <div 
+                      key={token.symbol} 
+                      className="p-4 rounded-xl"
+                      style={{ background: 'var(--oz-surface)', border: '1px solid var(--oz-border)' }}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm" 
+                            style={{ background: 'var(--oz-blue-light)', color: 'var(--oz-blue)' }}>
+                            {token.symbol.slice(0, 2)}
+                          </div>
+                          <div>
+                            <div className="font-medium text-sm" style={{ color: 'var(--oz-text)' }}>{token.name}</div>
+                            <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>{token.symbol}</div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => toggleTokenForSetup(token)}
+                          className="p-1.5 rounded-lg hover:bg-red-500/10 transition-colors text-red-500"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                      
+                      <div className="grid md:grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-xs mb-1" style={{ color: 'var(--oz-text-muted)' }}>L1 Address</label>
+                          <div className="flex items-center gap-2 p-2 rounded-lg" style={{ background: 'var(--oz-bg)', border: '1px solid var(--oz-border)' }}>
+                            <code className="text-xs font-mono flex-1 truncate" style={{ color: 'var(--oz-text)' }}>
+                              {token.l1Address || '—'}
+                            </code>
+                            {token.l1Address && (
+                              <button onClick={() => copyAddress(token.l1Address)} className="p-1 hover:opacity-70" style={{ color: 'var(--oz-text-muted)' }}>
+                                <Copy className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs mb-1" style={{ color: 'var(--oz-text-muted)' }}>HUB Chain Address</label>
+                          <div className="flex items-center gap-2 p-2 rounded-lg" style={{ background: 'var(--oz-bg)', border: '1px solid var(--oz-border)' }}>
+                            <code className="text-xs font-mono flex-1 truncate" style={{ color: 'var(--oz-text)' }}>
+                              {token.hubChainAddress}
+                            </code>
+                            <button onClick={() => copyAddress(token.hubChainAddress)} className="p-1 hover:opacity-70" style={{ color: 'var(--oz-text-muted)' }}>
+                              <Copy className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs mb-1" style={{ color: 'var(--oz-text-muted)' }}>Your L2 Address *</label>
+                          <input
+                            type="text"
+                            value={token.l2Address}
+                            onChange={(e) => updateTokenL2Address(token.symbol, e.target.value)}
+                            placeholder="0x..."
+                            className="oz-input text-xs font-mono py-2"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Add Custom Token Modal */}
+            {showAddCustomToken && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm" style={{ background: 'rgba(0,0,0,0.5)' }}>
+                <div className="w-full max-w-md rounded-2xl p-6 animate-fade-in" style={{ background: 'var(--oz-card)', border: '1px solid var(--oz-border)' }}>
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-semibold" style={{ color: 'var(--oz-text)' }}>Add Custom Token</h3>
+                    <button
+                      onClick={() => setShowAddCustomToken(false)}
+                      className="p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                      style={{ color: 'var(--oz-text-muted)' }}
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--oz-text)' }}>Token Name *</label>
+                        <input
+                          type="text"
+                          value={customToken.name}
+                          onChange={(e) => setCustomToken({ ...customToken, name: e.target.value })}
+                          placeholder="e.g., My Token"
+                          className="oz-input text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--oz-text)' }}>Symbol *</label>
+                        <input
+                          type="text"
+                          value={customToken.symbol}
+                          onChange={(e) => setCustomToken({ ...customToken, symbol: e.target.value.toUpperCase() })}
+                          placeholder="e.g., MTK"
+                          className="oz-input text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--oz-text)' }}>HUB Chain Address *</label>
+                      <input
+                        type="text"
+                        value={customToken.hubChainAddress}
+                        onChange={(e) => setCustomToken({ ...customToken, hubChainAddress: e.target.value })}
+                        placeholder="0x..."
+                        className="oz-input text-sm font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--oz-text)' }}>Your L2 Address *</label>
+                      <input
+                        type="text"
+                        value={customToken.l2Address}
+                        onChange={(e) => setCustomToken({ ...customToken, l2Address: e.target.value })}
+                        placeholder="0x..."
+                        className="oz-input text-sm font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--oz-text)' }}>L1 Address (Optional)</label>
+                      <input
+                        type="text"
+                        value={customToken.l1Address}
+                        onChange={(e) => setCustomToken({ ...customToken, l1Address: e.target.value })}
+                        placeholder="0x..."
+                        className="oz-input text-sm font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 mt-6">
+                    <button onClick={() => setShowAddCustomToken(false)} className="oz-btn-secondary flex-1">Cancel</button>
+                    <button
+                      onClick={addCustomToken}
+                      disabled={!customToken.name || !customToken.symbol || !customToken.hubChainAddress || !customToken.l2Address}
+                      className="oz-btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Add Token
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Validation message */}
+            {selectedTokensForSetup.length > 0 && selectedTokensForSetup.some(t => !t.l2Address) && (
+              <div className="flex items-start gap-3 p-4 rounded-xl mb-6" 
+                style={{ background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+                <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                <div className="text-sm" style={{ color: 'var(--oz-text-muted)' }}>
+                  Please provide the L2 address for all selected tokens to continue.
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => { setIsConnected(false); resetSetupFlow(); }}
+                className="oz-btn-secondary flex-1"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={proceedToFunding}
+                disabled={selectedTokensForSetup.length === 0 || selectedTokensForSetup.some(t => !t.l2Address)}
+                className="oz-btn-primary flex-1 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Continue to Funding
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // New Solver Setup Flow - Funding
+  if (isNewSolverFlow && setupStep === 'funding') {
+    return (
+      <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8" style={{ background: 'var(--oz-bg)' }}>
+        <div className="max-w-3xl mx-auto">
+          {/* Progress Steps */}
+          <div className="flex items-center justify-center mb-8">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold" 
+                  style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                </div>
+                <span className="text-sm" style={{ color: 'var(--oz-text-muted)' }}>Token Sets</span>
+              </div>
+              <div className="w-12 h-0.5 bg-emerald-500"></div>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gradient-to-br from-oz-blue to-oz-purple text-white text-sm font-semibold">2</div>
+                <span className="text-sm font-medium" style={{ color: 'var(--oz-text)' }}>Fund Solver</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="oz-card p-8">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'var(--oz-blue-light)' }}>
+                <Coins className="w-6 h-6" style={{ color: 'var(--oz-blue)' }} />
+              </div>
+              <div>
+                <h2 className="text-2xl font-semibold" style={{ color: 'var(--oz-text)' }}>Fund Your Solver</h2>
+                <p style={{ color: 'var(--oz-text-muted)' }}>Deposit tokens to the solver address on both HUB and L2 chains.</p>
+              </div>
+            </div>
+
+            {/* Deposit Address */}
+            <div className="p-4 rounded-xl mb-6" style={{ background: 'var(--oz-surface)', border: '1px solid var(--oz-border)' }}>
+              <div className="text-sm mb-2" style={{ color: 'var(--oz-text-muted)' }}>Solver Deposit Address (same on all chains)</div>
+              <div className="flex items-center gap-2">
+                <code className="font-mono text-sm flex-1" style={{ color: 'var(--oz-text)' }}>{kmsAddress}</code>
+                <button onClick={() => copyAddress(kmsAddress)} className="oz-btn-secondary px-3 py-1.5 text-sm flex items-center gap-2">
+                  <Copy className="w-3.5 h-3.5" />
+                  Copy
+                </button>
+              </div>
+            </div>
+
+            {/* Token Addresses per Network */}
+            <div className="mb-6">
+              <h3 className="text-sm font-medium mb-3" style={{ color: 'var(--oz-text)' }}>
+                Token Addresses ({selectedTokensForSetup.length} tokens)
+              </h3>
+              <div className="space-y-4">
+                {selectedTokensForSetup.map((token) => {
+                  const verifiedToken = verifiedBalances.find(t => t.symbol === token.symbol)
+                  return (
+                    <div key={token.symbol} className="p-4 rounded-xl" 
+                      style={{ background: 'var(--oz-surface)', border: '1px solid var(--oz-border)' }}>
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm" 
+                          style={{ background: 'var(--oz-blue-light)', color: 'var(--oz-blue)' }}>
+                          {token.symbol.slice(0, 2)}
+                        </div>
+                        <div>
+                          <div className="font-medium text-sm" style={{ color: 'var(--oz-text)' }}>{token.name}</div>
+                          <div className="text-xs" style={{ color: 'var(--oz-text-muted)' }}>{token.symbol}</div>
+                        </div>
+                      </div>
+                      
+                      <div className="grid md:grid-cols-3 gap-3">
+                        {/* L1 */}
+                        <div className="p-3 rounded-lg" style={{ background: 'var(--oz-bg)', border: '1px solid var(--oz-border)' }}>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-medium" style={{ color: 'var(--oz-text-muted)' }}>L1</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <code className="text-xs font-mono flex-1 truncate" style={{ color: 'var(--oz-text)' }}>
+                              {token.l1Address || '—'}
+                            </code>
+                            {token.l1Address && (
+                              <button onClick={() => copyAddress(token.l1Address)} className="p-1 hover:opacity-70" style={{ color: 'var(--oz-text-muted)' }}>
+                                <Copy className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* HUB Chain */}
+                        <div className="p-3 rounded-lg" style={{ background: 'var(--oz-bg)', border: '1px solid var(--oz-border)' }}>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-medium" style={{ color: 'var(--oz-text-muted)' }}>HUB Chain</span>
+                            {verifiedToken && (
+                              <span className="text-xs font-mono font-medium text-emerald-500">
+                                {verifiedToken.hubBalance} {token.symbol}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <code className="text-xs font-mono flex-1 truncate" style={{ color: 'var(--oz-text)' }}>
+                              {token.hubChainAddress}
+                            </code>
+                            <button onClick={() => copyAddress(token.hubChainAddress)} className="p-1 hover:opacity-70" style={{ color: 'var(--oz-text-muted)' }}>
+                              <Copy className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* L2 Chain */}
+                        <div className="p-3 rounded-lg" style={{ background: 'var(--oz-bg)', border: '1px solid var(--oz-border)' }}>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-medium" style={{ color: 'var(--oz-text-muted)' }}>Your L2</span>
+                            {verifiedToken && (
+                              <span className="text-xs font-mono font-medium text-emerald-500">
+                                {verifiedToken.l2Balance} {token.symbol}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <code className="text-xs font-mono flex-1 truncate" style={{ color: 'var(--oz-text)' }}>
+                              {token.l2Address}
+                            </code>
+                            <button onClick={() => copyAddress(token.l2Address)} className="p-1 hover:opacity-70" style={{ color: 'var(--oz-text-muted)' }}>
+                              <Copy className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Instructions (show before verification) */}
+            {!depositsVerified && (
+              <div className="p-4 rounded-xl mb-6" style={{ background: 'var(--oz-blue-light)', border: '1px solid rgba(78, 94, 228, 0.1)' }}>
+                <h4 className="font-medium mb-2" style={{ color: 'var(--oz-blue)' }}>Deposit Instructions</h4>
+                <ol className="space-y-2 text-sm list-decimal list-inside" style={{ color: 'var(--oz-text-muted)' }}>
+                  <li>Send initial liquidity for each token to the solver address: <code className="font-mono text-xs">{kmsAddress.slice(0, 10)}...</code></li>
+                  <li>Deposit on both the HUB chain and your L2 chain for each token</li>
+                  <li>Click "Verify Deposits" once you've completed the transfers</li>
+                </ol>
+              </div>
+            )}
+
+            {/* Verification Success */}
+            {depositsVerified && (
+              <div className="p-4 rounded-xl mb-6" 
+                style={{ background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                <div className="flex items-center gap-3 mb-3">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                  <span className="font-medium text-emerald-600">Deposits verified successfully!</span>
+                </div>
+                <p className="text-sm" style={{ color: 'var(--oz-text-muted)' }}>
+                  Your solver is funded and ready to go. Click "Launch Dashboard" to start managing your solver.
+                </p>
+              </div>
+            )}
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => { setSetupStep('tokens'); setDepositsVerified(false); setVerifiedBalances([]); }}
+                className="oz-btn-secondary flex-1"
+              >
+                Back
+              </button>
+              {!depositsVerified ? (
+                <button
+                  onClick={verifyDeposits}
+                  disabled={isVerifyingDeposits}
+                  className="oz-btn-primary flex-1 flex items-center justify-center gap-2"
+                >
+                  {isVerifyingDeposits ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Verifying...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      Verify Deposits
+                    </>
+                  )}
+                </button>
+              ) : (
+                <button
+                  onClick={completeSetup}
+                  className="oz-btn-primary flex-1 flex items-center justify-center gap-2"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Launch Dashboard
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
